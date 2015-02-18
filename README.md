@@ -27,9 +27,16 @@ var DSMongoDBAdapter = require('js-data-mongodb');
 var store = new JSData.DS();
 var adapter = new DSMongoDBAdapter();
 
+// "store" will now use the MongoDB adapter for all async operations
 store.registerAdapter('mongodb', adapter, { default: true });
 
-// "store" will now use the MongoDB adapter for all async operations
+var User = store.defineResource({
+  // Why couldn't Mongo just use "id"?
+  idAttribute: '_id',
+
+  // map this resource to a collection, default is Resource#name
+  table: 'users'
+});
 ```
 
 ## Changelog
