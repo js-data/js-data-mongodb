@@ -13,7 +13,7 @@ __Latest Release:__ [![Latest Release](https://img.shields.io/github/release/js-
 
 __Status:__
 
-[![Dependency Status](https://img.shields.io/gemnasium/js-data/js-data-mongodb.svg?style=flat-square)](https://gemnasium.com/js-data/js-data-mongodb) [![Coverage Status](https://img.shields.io/coveralls/js-data/js-data-mongodb/master.svg?style=flat-square)](https://coveralls.io/r/js-data/js-data-mongodb?branch=master) [![Codacity](https://img.shields.io/codacy/64cca2890a594370a5c9f4d5c0e3fcc3.svg?style=flat-square)](https://www.codacy.com/public/jasondobry/js-data-mongodb/dashboard)
+[![Dependency Status](https://img.shields.io/gemnasium/js-data/js-data-mongodb.svg?style=flat-square)](https://gemnasium.com/js-data/js-data-mongodb) [![Coverage Status](https://img.shields.io/coveralls/js-data/js-data-mongodb/master.svg?style=flat-square)](https://coveralls.io/r/js-data/js-data-mongodb?branch=master) [![Codacity](https://img.shields.io/codacy/1f45ede49dfb4bdea68f46ca55631968.svg?style=flat-square)](https://www.codacy.com/public/jasondobry/js-data-mongodb/dashboard)
 
 __Supported Platforms:__
 
