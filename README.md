@@ -1,23 +1,25 @@
 <img src="https://raw.githubusercontent.com/js-data/js-data/master/js-data.png" alt="js-data logo" title="js-data" align="right" width="64" height="64" />
 
-## js-data-mongodb [![NPM version](https://badge.fury.io/js/js-data-mongodb.png)](http://badge.fury.io/js/js-data-mongodb)
+## js-data-mongodb [![npm version](https://img.shields.io/npm/v/js-data-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/js-data-mongodb) [![Circle CI](https://img.shields.io/circleci/project/js-data/js-data-mongodb/master.svg?style=flat-square)](https://circleci.com/gh/js-data/js-data-mongodb/tree/master) [![npm downloads](https://img.shields.io/npm/dm/js-data-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/js-data-mongodb) [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/js-data/js-data-mongodb/blob/master/LICENSE)
 
 MongoDB adapter for [js-data](http://www.js-data.io/).
 
-## API Documentation
+### API Documentation
 [DSMongoDBAdapter](http://www.js-data.io/docs/dsmongodbadapter)
 
-## Project Status
+### Project Status
 
-| Branch | Master |
-| ------ | ------ |
-| NPM | [![NPM version](https://badge.fury.io/js/js-data-mongodb.png)](http://badge.fury.io/js/js-data-mongodb) |
-| Build Status | [![Build Status](https://travis-ci.org/js-data/js-data-mongodb.png?branch=master)](https://travis-ci.org/js-data/js-data-mongodb) |
-| Code Climate | [![Code Climate](https://codeclimate.com/github/js-data/js-data-mongodb.png)](https://codeclimate.com/github/js-data/js-data-mongodb) |
-| Dependency Status | [![Dependency Status](https://gemnasium.com/js-data/js-data-mongodb.png)](https://gemnasium.com/js-data/js-data-mongodb) |
-| Coverage | [![Coverage Status](https://coveralls.io/repos/js-data/js-data-mongodb/badge.png?branch=master)](https://coveralls.io/r/js-data/js-data-mongodb?branch=master) |
+__Latest Release:__ [![Latest Release](https://img.shields.io/github/release/js-data/js-data-mongodb.svg?style=flat-square)](https://github.com/js-data/js-data-mongodb/releases)
 
-## Quick Start
+__Status:__
+
+[![Dependency Status](https://img.shields.io/gemnasium/js-data/js-data-mongodb.svg?style=flat-square)](https://gemnasium.com/js-data/js-data-mongodb) [![Coverage Status](https://img.shields.io/coveralls/js-data/js-data-mongodb/master.svg?style=flat-square)](https://coveralls.io/r/js-data/js-data-mongodb?branch=master) [![Codacity](https://img.shields.io/codacy/64cca2890a594370a5c9f4d5c0e3fcc3.svg?style=flat-square)](https://www.codacy.com/public/jasondobry/js-data-mongodb/dashboard)
+
+__Supported Platforms:__
+
+[![node version](https://img.shields.io/badge/Node-0.10%2B-green.svg?style=flat-square)](https://github.com/js-data/js-data)
+
+### Quick Start
 `npm install --save js-data js-data-mongodb`.
 
 ```js
@@ -25,7 +27,7 @@ var JSData = require('js-data');
 var DSMongoDBAdapter = require('js-data-mongodb');
 
 var store = new JSData.DS();
-var adapter = new DSMongoDBAdapter();
+var adapter = new DSMongoDBAdapter('mongodb://localhost:27017');
 
 // "store" will now use the MongoDB adapter for all async operations
 store.registerAdapter('mongodb', adapter, { default: true });
@@ -39,16 +41,16 @@ var User = store.defineResource({
 });
 ```
 
-## Changelog
+### Changelog
 [CHANGELOG.md](https://github.com/js-data/js-data-mongodb/blob/master/CHANGELOG.md)
 
-## Community
+### Community
 - [Mailing List](https://groups.io/org/groupsio/jsdata) - Ask your questions!
 - [Issues](https://github.com/js-data/js-data-mongodb/issues) - Found a bug? Feature request? Submit an issue!
 - [GitHub](https://github.com/js-data/js-data-mongodb) - View the source code for js-data.
 - [Contributing Guide](https://github.com/js-data/js-data-mongodb/blob/master/CONTRIBUTING.md)
 
-## Contributing
+### Contributing
 
 First, feel free to contact me with questions. [Mailing List](https://groups.io/org/groupsio/jsdata). [Issues](https://github.com/js-data/js-data-mongodb/issues).
 
@@ -61,7 +63,7 @@ First, feel free to contact me with questions. [Mailing List](https://groups.io/
 1. Write your code, including relevant documentation and tests
 1. Submit a PR and we'll review
 
-## License
+### License
 
 The MIT License (MIT)
 
