@@ -1,6 +1,13 @@
+##### 0.2.1 - 26 March 2015
+
+###### Backwards compatible bug fixes
+- #2 - Should not be saving relations (duplicating data)
+- #3 - Need to use removeCircular
+
 ##### 0.2.0 - 10 March 2015
 
-- Converted to ES6.
+###### Other
+- #1 - Convert to ES6.
 
 ##### 0.1.0 - 18 February 2015
 

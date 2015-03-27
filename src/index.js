@@ -1,14 +1,12 @@
-let MongoClient = require('mongodb').MongoClient;
-let JSData = require('js-data');
-let underscore = require('mout/string/underscore');
-let keys = require('mout/object/keys');
-let map = require('mout/array/map');
-let isEmpty = require('mout/lang/isEmpty');
-let forEach = JSData.DSUtils.forEach;
-let contains = JSData.DSUtils.contains;
-let isObject = JSData.DSUtils.isObject;
-let isString = JSData.DSUtils.isString;
-let forOwn = JSData.DSUtils.forOwn;
+import { MongoClient } from 'mongodb';
+import JSData from 'js-data';
+import underscore from 'mout/string/underscore';
+import keys from 'mout/object/keys';
+import omit from 'mout/object/omit';
+import map from 'mout/array/map';
+import isEmpty from 'mout/lang/isEmpty';
+let { DSUtils } = JSData;
+let { deepMixIn, forEach, contains, isObject, isString, copy, forOwn, removeCircular } = DSUtils;
 
 let reserved = [
   'orderBy',
@@ -21,7 +19,7 @@ let reserved = [
 
 class DSMongoDBAdapter {
   constructor(uri) {
-    this.client = new JSData.DSUtils.Promise((resolve, reject) => {
+    this.client = new DSUtils.Promise((resolve, reject) => {
       MongoClient.connect(uri, (err, db) => err ? reject(err) : resolve(db));
     });
   }
@@ -176,10 +174,9 @@ class DSMongoDBAdapter {
   }
 
   find(resourceConfig, id, options) {
-    let _this = this;
     options = options || {};
-    return _this.getClient().then(client => {
-      return new JSData.DSUtils.Promise((resolve, reject) => {
+    return this.getClient().then(client => {
+      return new DSUtils.Promise((resolve, reject) => {
         let params = {};
         params[resourceConfig.idAttribute] = id;
         client.collection(resourceConfig.table || underscore(resourceConfig.name)).findOne(params, options, (err, r) => {
@@ -196,13 +193,11 @@ class DSMongoDBAdapter {
   }
 
   findAll(resourceConfig, params, options) {
-    let _this = this;
-    options = options || {};
-    options = JSData.DSUtils.deepMixIn({}, options);
-    JSData.DSUtils.deepMixIn(options, _this.getQueryOptions(resourceConfig, params));
-    let query = _this.getQuery(resourceConfig, params);
-    return _this.getClient().then(client => {
-      return new JSData.DSUtils.Promise((resolve, reject) => {
+    options = options ? copy(options) : {};
+    deepMixIn(options, this.getQueryOptions(resourceConfig, params));
+    let query = this.getQuery(resourceConfig, params);
+    return this.getClient().then(client => {
+      return new DSUtils.Promise((resolve, reject) => {
         client.collection(resourceConfig.table || underscore(resourceConfig.name)).find(query, options).toArray((err, r) => {
           if (err) {
             reject(err);
@@ -215,10 +210,10 @@ class DSMongoDBAdapter {
   }
 
   create(resourceConfig, attrs, options) {
-    let _this = this;
     options = options || {};
-    return _this.getClient().then(client => {
-      return new JSData.DSUtils.Promise((resolve, reject) => {
+    attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
+    return this.getClient().then(client => {
+      return new DSUtils.Promise((resolve, reject) => {
         client.collection(resourceConfig.table || underscore(resourceConfig.name)).insert(attrs, options, (err, r) => {
           if (err) {
             reject(err);
@@ -231,12 +226,11 @@ class DSMongoDBAdapter {
   }
 
   update(resourceConfig, id, attrs, options) {
-    let _this = this;
+    attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
     options = options || {};
-
-    return _this.find(resourceConfig, id, options).then(() => {
-      return _this.getClient().then(client => {
-        return new JSData.DSUtils.Promise((resolve, reject) => {
+    return this.find(resourceConfig, id, options).then(() => {
+      return this.getClient().then(client => {
+        return new DSUtils.Promise((resolve, reject) => {
           let params = {};
           params[resourceConfig.idAttribute] = id;
           client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(params, { $set: attrs }, options, err => {
@@ -246,24 +240,24 @@ class DSMongoDBAdapter {
               resolve();
             }
           });
-        }).then(() => _this.find(resourceConfig, id, options));
+        }).then(() => this.find(resourceConfig, id, options));
       });
     });
   }
 
   updateAll(resourceConfig, attrs, params, options) {
-    let _this = this;
     let ids = [];
-    options = options || {};
-    let _options = JSData.DSUtils.deepMixIn({}, options);
+    attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
+    options = options ? copy(options) : {};
+    let _options = copy(options);
     _options.multi = true;
-    return _this.getClient().then(client => {
-      let queryOptions = _this.getQueryOptions(resourceConfig, params);
+    return this.getClient().then(client => {
+      let queryOptions = this.getQueryOptions(resourceConfig, params);
       queryOptions.$set = attrs;
-      let query = _this.getQuery(resourceConfig, params);
-      return _this.findAll(resourceConfig, params, options).then(items => {
+      let query = this.getQuery(resourceConfig, params);
+      return this.findAll(resourceConfig, params, options).then(items => {
         ids = map(items, item => item[resourceConfig.idAttribute]);
-        return new JSData.DSUtils.Promise((resolve, reject) => {
+        return new DSUtils.Promise((resolve, reject) => {
           client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(query, queryOptions, _options, err => {
             if (err) {
               reject(err);
@@ -277,16 +271,15 @@ class DSMongoDBAdapter {
         _params[resourceConfig.idAttribute] = {
           'in': ids
         };
-        return _this.findAll(resourceConfig, _params, options);
+        return this.findAll(resourceConfig, _params, options);
       });
     });
   }
 
   destroy(resourceConfig, id, options) {
-    let _this = this;
     options = options || {};
-    return _this.getClient().then(client => {
-      return new JSData.DSUtils.Promise((resolve, reject) => {
+    return this.getClient().then(client => {
+      return new DSUtils.Promise((resolve, reject) => {
         let params = {};
         params[resourceConfig.idAttribute] = id;
         client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(params, options, err => {
@@ -301,13 +294,11 @@ class DSMongoDBAdapter {
   }
 
   destroyAll(resourceConfig, params, options) {
-    let _this = this;
-    options = options || {};
-    return _this.getClient().then(client => {
-      options = JSData.DSUtils.deepMixIn({}, options);
-      JSData.DSUtils.deepMixIn(options, _this.getQueryOptions(resourceConfig, params));
-      let query = _this.getQuery(resourceConfig, params);
-      return new JSData.DSUtils.Promise((resolve, reject) => {
+    options = options ? copy(options) : {};
+    return this.getClient().then(client => {
+      deepMixIn(options, this.getQueryOptions(resourceConfig, params));
+      let query = this.getQuery(resourceConfig, params);
+      return new DSUtils.Promise((resolve, reject) => {
         client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(query, options, err => {
           if (err) {
             reject(err);

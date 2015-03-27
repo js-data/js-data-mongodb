@@ -45,21 +45,35 @@ module.exports =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
 	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
 	var MongoClient = __webpack_require__(1).MongoClient;
-	var JSData = __webpack_require__(2);
-	var underscore = __webpack_require__(3);
-	var keys = __webpack_require__(4);
-	var map = __webpack_require__(5);
-	var isEmpty = __webpack_require__(6);
-	var forEach = JSData.DSUtils.forEach;
-	var contains = JSData.DSUtils.contains;
-	var isObject = JSData.DSUtils.isObject;
-	var isString = JSData.DSUtils.isString;
-	var forOwn = JSData.DSUtils.forOwn;
+
+	var JSData = _interopRequire(__webpack_require__(2));
+
+	var underscore = _interopRequire(__webpack_require__(3));
+
+	var keys = _interopRequire(__webpack_require__(4));
+
+	var omit = _interopRequire(__webpack_require__(7));
+
+	var map = _interopRequire(__webpack_require__(5));
+
+	var isEmpty = _interopRequire(__webpack_require__(6));
+
+	var DSUtils = JSData.DSUtils;
+	var deepMixIn = DSUtils.deepMixIn;
+	var forEach = DSUtils.forEach;
+	var contains = DSUtils.contains;
+	var isObject = DSUtils.isObject;
+	var isString = DSUtils.isString;
+	var copy = DSUtils.copy;
+	var forOwn = DSUtils.forOwn;
+	var removeCircular = DSUtils.removeCircular;
 
 	var reserved = ["orderBy", "sort", "limit", "offset", "skip", "where"];
 
@@ -67,7 +81,7 @@ module.exports =
 	  function DSMongoDBAdapter(uri) {
 	    _classCallCheck(this, DSMongoDBAdapter);
 
-	    this.client = new JSData.DSUtils.Promise(function (resolve, reject) {
+	    this.client = new DSUtils.Promise(function (resolve, reject) {
 	      MongoClient.connect(uri, function (err, db) {
 	        return err ? reject(err) : resolve(db);
 	      });
@@ -227,10 +241,9 @@ module.exports =
 	    },
 	    find: {
 	      value: function find(resourceConfig, id, options) {
-	        var _this = this;
 	        options = options || {};
-	        return _this.getClient().then(function (client) {
-	          return new JSData.DSUtils.Promise(function (resolve, reject) {
+	        return this.getClient().then(function (client) {
+	          return new DSUtils.Promise(function (resolve, reject) {
 	            var params = {};
 	            params[resourceConfig.idAttribute] = id;
 	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).findOne(params, options, function (err, r) {
@@ -248,13 +261,11 @@ module.exports =
 	    },
 	    findAll: {
 	      value: function findAll(resourceConfig, params, options) {
-	        var _this = this;
-	        options = options || {};
-	        options = JSData.DSUtils.deepMixIn({}, options);
-	        JSData.DSUtils.deepMixIn(options, _this.getQueryOptions(resourceConfig, params));
-	        var query = _this.getQuery(resourceConfig, params);
-	        return _this.getClient().then(function (client) {
-	          return new JSData.DSUtils.Promise(function (resolve, reject) {
+	        options = options ? copy(options) : {};
+	        deepMixIn(options, this.getQueryOptions(resourceConfig, params));
+	        var query = this.getQuery(resourceConfig, params);
+	        return this.getClient().then(function (client) {
+	          return new DSUtils.Promise(function (resolve, reject) {
 	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).find(query, options).toArray(function (err, r) {
 	              if (err) {
 	                reject(err);
@@ -268,10 +279,10 @@ module.exports =
 	    },
 	    create: {
 	      value: function create(resourceConfig, attrs, options) {
-	        var _this = this;
 	        options = options || {};
-	        return _this.getClient().then(function (client) {
-	          return new JSData.DSUtils.Promise(function (resolve, reject) {
+	        attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
+	        return this.getClient().then(function (client) {
+	          return new DSUtils.Promise(function (resolve, reject) {
 	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).insert(attrs, options, function (err, r) {
 	              if (err) {
 	                reject(err);
@@ -286,11 +297,12 @@ module.exports =
 	    update: {
 	      value: function update(resourceConfig, id, attrs, options) {
 	        var _this = this;
-	        options = options || {};
 
-	        return _this.find(resourceConfig, id, options).then(function () {
+	        attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
+	        options = options || {};
+	        return this.find(resourceConfig, id, options).then(function () {
 	          return _this.getClient().then(function (client) {
-	            return new JSData.DSUtils.Promise(function (resolve, reject) {
+	            return new DSUtils.Promise(function (resolve, reject) {
 	              var params = {};
 	              params[resourceConfig.idAttribute] = id;
 	              client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(params, { $set: attrs }, options, function (err) {
@@ -310,11 +322,13 @@ module.exports =
 	    updateAll: {
 	      value: function updateAll(resourceConfig, attrs, params, options) {
 	        var _this = this;
+
 	        var ids = [];
-	        options = options || {};
-	        var _options = JSData.DSUtils.deepMixIn({}, options);
+	        attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
+	        options = options ? copy(options) : {};
+	        var _options = copy(options);
 	        _options.multi = true;
-	        return _this.getClient().then(function (client) {
+	        return this.getClient().then(function (client) {
 	          var queryOptions = _this.getQueryOptions(resourceConfig, params);
 	          queryOptions.$set = attrs;
 	          var query = _this.getQuery(resourceConfig, params);
@@ -322,7 +336,7 @@ module.exports =
 	            ids = map(items, function (item) {
 	              return item[resourceConfig.idAttribute];
 	            });
-	            return new JSData.DSUtils.Promise(function (resolve, reject) {
+	            return new DSUtils.Promise(function (resolve, reject) {
 	              client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(query, queryOptions, _options, function (err) {
 	                if (err) {
 	                  reject(err);
@@ -343,10 +357,9 @@ module.exports =
 	    },
 	    destroy: {
 	      value: function destroy(resourceConfig, id, options) {
-	        var _this = this;
 	        options = options || {};
-	        return _this.getClient().then(function (client) {
-	          return new JSData.DSUtils.Promise(function (resolve, reject) {
+	        return this.getClient().then(function (client) {
+	          return new DSUtils.Promise(function (resolve, reject) {
 	            var params = {};
 	            params[resourceConfig.idAttribute] = id;
 	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(params, options, function (err) {
@@ -363,12 +376,12 @@ module.exports =
 	    destroyAll: {
 	      value: function destroyAll(resourceConfig, params, options) {
 	        var _this = this;
-	        options = options || {};
-	        return _this.getClient().then(function (client) {
-	          options = JSData.DSUtils.deepMixIn({}, options);
-	          JSData.DSUtils.deepMixIn(options, _this.getQueryOptions(resourceConfig, params));
+
+	        options = options ? copy(options) : {};
+	        return this.getClient().then(function (client) {
+	          deepMixIn(options, _this.getQueryOptions(resourceConfig, params));
 	          var query = _this.getQuery(resourceConfig, params);
-	          return new JSData.DSUtils.Promise(function (resolve, reject) {
+	          return new DSUtils.Promise(function (resolve, reject) {
 	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(query, options, function (err) {
 	              if (err) {
 	                reject(err);
@@ -422,6 +435,124 @@ module.exports =
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = require("mout/lang/isEmpty");
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var slice = __webpack_require__(8);
+	var contains = __webpack_require__(9);
+
+	    /**
+	     * Return a copy of the object, filtered to only contain properties except the blacklisted keys.
+	     */
+	    function omit(obj, var_keys){
+	        var keys = typeof arguments[1] !== 'string'? arguments[1] : slice(arguments, 1),
+	            out = {};
+
+	        for (var property in obj) {
+	            if (obj.hasOwnProperty(property) && !contains(keys, property)) {
+	                out[property] = obj[property];
+	            }
+	        }
+	        return out;
+	    }
+
+	    module.exports = omit;
+
+
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	    /**
+	     * Create slice of source array or array-like object
+	     */
+	    function slice(arr, start, end){
+	        var len = arr.length;
+
+	        if (start == null) {
+	            start = 0;
+	        } else if (start < 0) {
+	            start = Math.max(len + start, 0);
+	        } else {
+	            start = Math.min(start, len);
+	        }
+
+	        if (end == null) {
+	            end = len;
+	        } else if (end < 0) {
+	            end = Math.max(len + end, 0);
+	        } else {
+	            end = Math.min(end, len);
+	        }
+
+	        var result = [];
+	        while (start < end) {
+	            result.push(arr[start++]);
+	        }
+
+	        return result;
+	    }
+
+	    module.exports = slice;
+
+
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var indexOf = __webpack_require__(10);
+
+	    /**
+	     * If array contains values.
+	     */
+	    function contains(arr, val) {
+	        return indexOf(arr, val) !== -1;
+	    }
+	    module.exports = contains;
+
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	    /**
+	     * Array.indexOf
+	     */
+	    function indexOf(arr, item, fromIndex) {
+	        fromIndex = fromIndex || 0;
+	        if (arr == null) {
+	            return -1;
+	        }
+
+	        var len = arr.length,
+	            i = fromIndex < 0 ? len + fromIndex : fromIndex;
+	        while (i < len) {
+	            // we iterate over sparse items since there is no way to make it
+	            // work properly on IE 7-8. see #64
+	            if (arr[i] === item) {
+	                return i;
+	            }
+
+	            i++;
+	        }
+
+	        return -1;
+	    }
+
+	    module.exports = indexOf;
+
+
 
 /***/ }
 /******/ ]);

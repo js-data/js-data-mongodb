@@ -1,6 +1,6 @@
 /*
  * js-data-mongodb
- * http://github.com/js-data/js-data-mongodb
+ * https://github.com/js-data/js-data-mongodb
  *
  * Copyright (c) 2014-2015 Jason Dobry <http://www.js-data.io/docs/dsmongodbadapter>
  * Licensed under the MIT license. <https://github.com/js-data/js-data-mongodb/blob/master/LICENSE>
