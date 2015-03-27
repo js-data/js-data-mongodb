@@ -1,3 +1,8 @@
+##### 0.2.2 - 26 March 2015
+
+###### Backwards compatible bug fixes
+- Fix dependency
+
 ##### 0.2.1 - 26 March 2015
 
 ###### Backwards compatible bug fixes

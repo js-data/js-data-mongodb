@@ -55,7 +55,7 @@ class DSMongoDBAdapter {
             '==': criteria
           };
         }
-        forOwn(criteria, function (v, op) {
+        forOwn(criteria, (v, op) => {
           if (op === '==' || op === '===') {
             query[field] = v;
           } else if (op === '!=' || op === '!==') {
