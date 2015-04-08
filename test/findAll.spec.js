@@ -1,8 +1,8 @@
 describe('DSMongoDBAdapter#findAll', function () {
-  it('should filter users', function (done) {
+  it('should filter users', function () {
     var id;
 
-    adapter.findAll(User, {
+    return adapter.findAll(User, {
       age: 30
     }).then(function (users) {
       assert.equal(users.length, 0);
@@ -18,13 +18,12 @@ describe('DSMongoDBAdapter#findAll', function () {
       return adapter.destroy(User, id);
     }).then(function (destroyedUser) {
       assert.isFalse(!!destroyedUser);
-      done();
-    }).catch(done);
+    });
   });
-  it('should filter users using the "in" operator', function (done) {
+  it('should filter users using the "in" operator', function () {
     var id;
 
-    adapter.findAll(User, {
+    return adapter.findAll(User, {
       where: {
         age: {
           'in': [30]
@@ -44,7 +43,6 @@ describe('DSMongoDBAdapter#findAll', function () {
       return adapter.destroy(User, id);
     }).then(function (destroyedUser) {
       assert.isFalse(!!destroyedUser);
-      done();
-    }).catch(done);
+    });
   });
 });

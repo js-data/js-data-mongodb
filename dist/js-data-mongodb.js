@@ -59,11 +59,11 @@ module.exports =
 
 	var keys = _interopRequire(__webpack_require__(4));
 
-	var omit = _interopRequire(__webpack_require__(7));
+	var omit = _interopRequire(__webpack_require__(5));
 
-	var map = _interopRequire(__webpack_require__(5));
+	var map = _interopRequire(__webpack_require__(6));
 
-	var isEmpty = _interopRequire(__webpack_require__(6));
+	var isEmpty = _interopRequire(__webpack_require__(7));
 
 	var DSUtils = JSData.DSUtils;
 	var deepMixIn = DSUtils.deepMixIn;
@@ -252,6 +252,7 @@ module.exports =
 	              } else if (!r) {
 	                reject(new Error("Not Found!"));
 	              } else {
+	                r._id = r._id.valueOf();
 	                resolve(r);
 	              }
 	            });
@@ -270,6 +271,9 @@ module.exports =
 	              if (err) {
 	                reject(err);
 	              } else {
+	                r.forEach(function (_r) {
+	                  _r._id = _r._id.valueOf();
+	                });
 	                resolve(r);
 	              }
 	            });
@@ -283,11 +287,17 @@ module.exports =
 	        attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
 	        return this.getClient().then(function (client) {
 	          return new DSUtils.Promise(function (resolve, reject) {
-	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).insert(attrs, options, function (err, r) {
+	            var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+	            var method = collection.insertOne ? DSUtils.isArray(attrs) ? "insertMany" : "insertOne" : "insert";
+	            collection[method](attrs, options, function (err, r) {
 	              if (err) {
 	                reject(err);
 	              } else {
-	                resolve(r[0]);
+	                r = r.ops ? r.ops : r;
+	                r.forEach(function (_r) {
+	                  _r._id = _r._id.valueOf();
+	                });
+	                resolve(DSUtils.isArray(attrs) ? r : r[0]);
 	              }
 	            });
 	          });
@@ -305,7 +315,8 @@ module.exports =
 	            return new DSUtils.Promise(function (resolve, reject) {
 	              var params = {};
 	              params[resourceConfig.idAttribute] = id;
-	              client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(params, { $set: attrs }, options, function (err) {
+	              var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+	              collection[collection.updateOne ? "updateOne" : "update"](params, { $set: attrs }, options, function (err) {
 	                if (err) {
 	                  reject(err);
 	                } else {
@@ -337,7 +348,8 @@ module.exports =
 	              return item[resourceConfig.idAttribute];
 	            });
 	            return new DSUtils.Promise(function (resolve, reject) {
-	              client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(query, queryOptions, _options, function (err) {
+	              var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+	              collection[collection.updateMany ? "updateMany" : "update"](query, queryOptions, _options, function (err) {
 	                if (err) {
 	                  reject(err);
 	                } else {
@@ -362,7 +374,8 @@ module.exports =
 	          return new DSUtils.Promise(function (resolve, reject) {
 	            var params = {};
 	            params[resourceConfig.idAttribute] = id;
-	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(params, options, function (err) {
+	            var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+	            collection[collection.deleteOne ? "deleteOne" : "remove"](params, options, function (err) {
 	              if (err) {
 	                reject(err);
 	              } else {
@@ -382,7 +395,8 @@ module.exports =
 	          deepMixIn(options, _this.getQueryOptions(resourceConfig, params));
 	          var query = _this.getQuery(resourceConfig, params);
 	          return new DSUtils.Promise(function (resolve, reject) {
-	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(query, options, function (err) {
+	            var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+	            collection[collection.deleteMany ? "deleteMany" : "remove"](query, options, function (err) {
 	              if (err) {
 	                reject(err);
 	              } else {
@@ -428,131 +442,19 @@ module.exports =
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = require("mout/array/map");
+	module.exports = require("mout/object/omit");
 
 /***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = require("mout/lang/isEmpty");
+	module.exports = require("mout/array/map");
 
 /***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var slice = __webpack_require__(8);
-	var contains = __webpack_require__(9);
-
-	    /**
-	     * Return a copy of the object, filtered to only contain properties except the blacklisted keys.
-	     */
-	    function omit(obj, var_keys){
-	        var keys = typeof arguments[1] !== 'string'? arguments[1] : slice(arguments, 1),
-	            out = {};
-
-	        for (var property in obj) {
-	            if (obj.hasOwnProperty(property) && !contains(keys, property)) {
-	                out[property] = obj[property];
-	            }
-	        }
-	        return out;
-	    }
-
-	    module.exports = omit;
-
-
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-
-	    /**
-	     * Create slice of source array or array-like object
-	     */
-	    function slice(arr, start, end){
-	        var len = arr.length;
-
-	        if (start == null) {
-	            start = 0;
-	        } else if (start < 0) {
-	            start = Math.max(len + start, 0);
-	        } else {
-	            start = Math.min(start, len);
-	        }
-
-	        if (end == null) {
-	            end = len;
-	        } else if (end < 0) {
-	            end = Math.max(len + end, 0);
-	        } else {
-	            end = Math.min(end, len);
-	        }
-
-	        var result = [];
-	        while (start < end) {
-	            result.push(arr[start++]);
-	        }
-
-	        return result;
-	    }
-
-	    module.exports = slice;
-
-
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var indexOf = __webpack_require__(10);
-
-	    /**
-	     * If array contains values.
-	     */
-	    function contains(arr, val) {
-	        return indexOf(arr, val) !== -1;
-	    }
-	    module.exports = contains;
-
-
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-
-	    /**
-	     * Array.indexOf
-	     */
-	    function indexOf(arr, item, fromIndex) {
-	        fromIndex = fromIndex || 0;
-	        if (arr == null) {
-	            return -1;
-	        }
-
-	        var len = arr.length,
-	            i = fromIndex < 0 ? len + fromIndex : fromIndex;
-	        while (i < len) {
-	            // we iterate over sparse items since there is no way to make it
-	            // work properly on IE 7-8. see #64
-	            if (arr[i] === item) {
-	                return i;
-	            }
-
-	            i++;
-	        }
-
-	        return -1;
-	    }
-
-	    module.exports = indexOf;
-
-
+	module.exports = require("mout/lang/isEmpty");
 
 /***/ }
 /******/ ]);

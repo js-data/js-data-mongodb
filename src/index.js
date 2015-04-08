@@ -185,6 +185,7 @@ class DSMongoDBAdapter {
           } else if (!r) {
             reject(new Error('Not Found!'));
           } else {
+            r._id = r._id.valueOf();
             resolve(r);
           }
         });
@@ -202,6 +203,9 @@ class DSMongoDBAdapter {
           if (err) {
             reject(err);
           } else {
+            r.forEach(_r => {
+              _r._id = _r._id.valueOf();
+            });
             resolve(r);
           }
         });
@@ -214,11 +218,17 @@ class DSMongoDBAdapter {
     attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
     return this.getClient().then(client => {
       return new DSUtils.Promise((resolve, reject) => {
-        client.collection(resourceConfig.table || underscore(resourceConfig.name)).insert(attrs, options, (err, r) => {
+        let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+        let method = collection.insertOne ? DSUtils.isArray(attrs) ? 'insertMany' : 'insertOne' : 'insert';
+        collection[method](attrs, options, (err, r) => {
           if (err) {
             reject(err);
           } else {
-            resolve(r[0]);
+            r = r.ops ? r.ops : r;
+            r.forEach(_r => {
+              _r._id = _r._id.valueOf();
+            });
+            resolve(DSUtils.isArray(attrs) ? r : r[0]);
           }
         });
       });
@@ -233,7 +243,8 @@ class DSMongoDBAdapter {
         return new DSUtils.Promise((resolve, reject) => {
           let params = {};
           params[resourceConfig.idAttribute] = id;
-          client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(params, { $set: attrs }, options, err => {
+          let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+          collection[collection.updateOne ? 'updateOne' : 'update'](params, { $set: attrs }, options, err => {
             if (err) {
               reject(err);
             } else {
@@ -258,7 +269,8 @@ class DSMongoDBAdapter {
       return this.findAll(resourceConfig, params, options).then(items => {
         ids = map(items, item => item[resourceConfig.idAttribute]);
         return new DSUtils.Promise((resolve, reject) => {
-          client.collection(resourceConfig.table || underscore(resourceConfig.name)).update(query, queryOptions, _options, err => {
+          let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+          collection[collection.updateMany ? 'updateMany' : 'update'](query, queryOptions, _options, err => {
             if (err) {
               reject(err);
             } else {
@@ -282,7 +294,8 @@ class DSMongoDBAdapter {
       return new DSUtils.Promise((resolve, reject) => {
         let params = {};
         params[resourceConfig.idAttribute] = id;
-        client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(params, options, err => {
+        let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+        collection[collection.deleteOne ? 'deleteOne' : 'remove'](params, options, err => {
           if (err) {
             reject(err);
           } else {
@@ -299,7 +312,8 @@ class DSMongoDBAdapter {
       deepMixIn(options, this.getQueryOptions(resourceConfig, params));
       let query = this.getQuery(resourceConfig, params);
       return new DSUtils.Promise((resolve, reject) => {
-        client.collection(resourceConfig.table || underscore(resourceConfig.name)).remove(query, options, err => {
+        let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
+        collection[collection.deleteMany ? 'deleteMany' : 'remove'](query, options, err => {
           if (err) {
             reject(err);
           } else {

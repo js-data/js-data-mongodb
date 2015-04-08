@@ -1,7 +1,7 @@
 describe('DSMongoDBAdapter#update', function () {
-  it('should update a user in MongoDB', function (done) {
+  it('should update a user in MongoDB', function () {
     var id;
-    adapter.create(User, { name: 'John' })
+    return adapter.create(User, { name: 'John' })
       .then(function (user) {
         id = user._id;
         assert.equal(user.name, 'John');
@@ -28,14 +28,9 @@ describe('DSMongoDBAdapter#update', function () {
       })
       .then(function (user) {
         assert.isFalse(!!user);
-        return adapter.find(User, id);
-      })
-      .then(function () {
-        done('Should not have reached here!');
-      })
-      .catch(function (err) {
-        assert.equal(err.message, 'Not Found!');
-        done();
+        return adapter.find(User, id).catch(function (err) {
+          assert.equal(err.message, 'Not Found!');
+        });
       });
   });
 });
