@@ -53,17 +53,19 @@ module.exports =
 
 	var MongoClient = __webpack_require__(1).MongoClient;
 
-	var JSData = _interopRequire(__webpack_require__(2));
+	var ObjectID = __webpack_require__(2).ObjectID;
 
-	var underscore = _interopRequire(__webpack_require__(3));
+	var JSData = _interopRequire(__webpack_require__(3));
 
-	var keys = _interopRequire(__webpack_require__(4));
+	var underscore = _interopRequire(__webpack_require__(4));
 
-	var omit = _interopRequire(__webpack_require__(5));
+	var keys = _interopRequire(__webpack_require__(5));
 
-	var map = _interopRequire(__webpack_require__(6));
+	var omit = _interopRequire(__webpack_require__(6));
 
-	var isEmpty = _interopRequire(__webpack_require__(7));
+	var map = _interopRequire(__webpack_require__(7));
+
+	var isEmpty = _interopRequire(__webpack_require__(8));
 
 	var DSUtils = JSData.DSUtils;
 	var deepMixIn = DSUtils.deepMixIn;
@@ -246,6 +248,9 @@ module.exports =
 	          return new DSUtils.Promise(function (resolve, reject) {
 	            var params = {};
 	            params[resourceConfig.idAttribute] = id;
+	            if (resourceConfig.idAttribute === "_id" && typeof id === "string" && ObjectID.isValid(id)) {
+	              params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id);
+	            }
 	            client.collection(resourceConfig.table || underscore(resourceConfig.name)).findOne(params, options, function (err, r) {
 	              if (err) {
 	                reject(err);
@@ -424,34 +429,40 @@ module.exports =
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = require("js-data");
+	module.exports = require("bson");
 
 /***/ },
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = require("mout/string/underscore");
+	module.exports = require("js-data");
 
 /***/ },
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = require("mout/object/keys");
+	module.exports = require("mout/string/underscore");
 
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = require("mout/object/omit");
+	module.exports = require("mout/object/keys");
 
 /***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = require("mout/array/map");
+	module.exports = require("mout/object/omit");
 
 /***/ },
 /* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = require("mout/array/map");
+
+/***/ },
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = require("mout/lang/isEmpty");

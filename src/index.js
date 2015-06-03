@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb';
+import { ObjectID } from 'bson';
 import JSData from 'js-data';
 import underscore from 'mout/string/underscore';
 import keys from 'mout/object/keys';
@@ -179,6 +180,9 @@ class DSMongoDBAdapter {
       return new DSUtils.Promise((resolve, reject) => {
         let params = {};
         params[resourceConfig.idAttribute] = id;
+        if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
+            params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id);
+        }
         client.collection(resourceConfig.table || underscore(resourceConfig.name)).findOne(params, options, (err, r) => {
           if (err) {
             reject(err);
