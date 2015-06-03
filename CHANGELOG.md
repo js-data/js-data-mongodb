@@ -1,7 +1,13 @@
+##### 0.3.0 - 02 June 2015
+
+###### Backwards compatible bug fixes
+- #9 is really fixed now
+- Upgraded dependencies
+
 ##### 0.2.3 - 07 April 2015
 
 ###### Backwards compatible bug fixes
-- #Added better support for
+- #Added better support for ObjectIds
 
 ##### 0.2.2 - 26 March 2015
 
