@@ -55,7 +55,8 @@ module.exports = function (grunt) {
           'mout/object/omit',
           'js-data',
           'js-data-schema',
-          'mongodb'
+          'mongodb',
+          'bson'
         ],
         module: {
           loaders: [
