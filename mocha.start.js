@@ -49,14 +49,15 @@ test.globals(testGlobals);
 
 beforeEach(function () {
   store = new JSData.DS({
+    idAttribute: '_id',
     log: false
   });
   adapter = new DSMongoDBAdapter('mongodb://localhost:27017');
+  store.registerAdapter('mongo', adapter, { 'default': true });
   DSUtils = JSData.DSUtils;
   DSErrors = JSData.DSErrors;
   globals.User = global.User = User = store.defineResource({
     name: 'user',
-    idAttribute: '_id',
     relations: {
       hasMany: {
         post: {
@@ -68,7 +69,6 @@ beforeEach(function () {
   });
   globals.Post = global.Post = Post = store.defineResource({
     name: 'post',
-    idAttribute: '_id',
     relations: {
       belongsTo: {
         user: {
@@ -86,7 +86,6 @@ beforeEach(function () {
   });
   globals.Comment = global.Comment = Comment = store.defineResource({
     name: 'comment',
-    idAttribute: '_id',
     relations: {
       belongsTo: {
         post: {
