@@ -1,13 +1,12 @@
-import { MongoClient } from 'mongodb';
-import { ObjectID } from 'bson';
-import JSData from 'js-data';
-import underscore from 'mout/string/underscore';
-import keys from 'mout/object/keys';
-import omit from 'mout/object/omit';
-import map from 'mout/array/map';
-import isEmpty from 'mout/lang/isEmpty';
+let mongodb = require('mongodb');
+let MongoClient = mongodb.MongoClient;
+let bson = require('bson');
+let ObjectID = bson.ObjectID;
+let JSData = require('js-data');
+let underscore = require('mout/string/underscore');
+let map = require('mout/array/map');
 let { DSUtils } = JSData;
-let { deepMixIn, forEach, contains, isObject, isString, copy, forOwn, removeCircular } = DSUtils;
+let { keys, omit, isEmpty, deepMixIn, forEach, contains, isObject, isString, copy, forOwn, removeCircular } = DSUtils;
 
 let reserved = [
   'orderBy',

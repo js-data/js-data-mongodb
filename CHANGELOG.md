@@ -1,3 +1,9 @@
+##### 0.4.0 - 02 July 2015
+
+Stable Version 0.4.0
+
+Upgraded dependencies
+
 ##### 0.3.0 - 02 June 2015
 
 ###### Backwards compatible bug fixes

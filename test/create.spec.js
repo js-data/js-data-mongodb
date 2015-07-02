@@ -18,6 +18,9 @@ describe('DSMongoDBAdapter#create', function () {
         return adapter.find(User, id).catch(function (err) {
           assert.equal(err.message, 'Not Found!');
         });
+      }).catch(function (err) {
+        console.log(err);
+        throw err;
       });
   });
 });

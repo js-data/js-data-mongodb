@@ -51,39 +51,19 @@ module.exports =
 
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var _mongodb = __webpack_require__(2);
-
-	var _bson = __webpack_require__(3);
-
-	var _jsData = __webpack_require__(4);
-
-	var _jsData2 = _interopRequireDefault(_jsData);
-
-	var _moutStringUnderscore = __webpack_require__(5);
-
-	var _moutStringUnderscore2 = _interopRequireDefault(_moutStringUnderscore);
-
-	var _moutObjectKeys = __webpack_require__(1);
-
-	var _moutObjectKeys2 = _interopRequireDefault(_moutObjectKeys);
-
-	var _moutObjectOmit = __webpack_require__(6);
-
-	var _moutObjectOmit2 = _interopRequireDefault(_moutObjectOmit);
-
-	var _moutArrayMap = __webpack_require__(7);
-
-	var _moutArrayMap2 = _interopRequireDefault(_moutArrayMap);
-
-	var _moutLangIsEmpty = __webpack_require__(8);
-
-	var _moutLangIsEmpty2 = _interopRequireDefault(_moutLangIsEmpty);
-
-	var DSUtils = _jsData2['default'].DSUtils;
+	var mongodb = __webpack_require__(1);
+	var MongoClient = mongodb.MongoClient;
+	var bson = __webpack_require__(2);
+	var ObjectID = bson.ObjectID;
+	var JSData = __webpack_require__(3);
+	var underscore = __webpack_require__(4);
+	var map = __webpack_require__(5);
+	var DSUtils = JSData.DSUtils;
+	var keys = DSUtils.keys;
+	var omit = DSUtils.omit;
+	var isEmpty = DSUtils.isEmpty;
 	var deepMixIn = DSUtils.deepMixIn;
 	var forEach = DSUtils.forEach;
 	var contains = DSUtils.contains;
@@ -111,7 +91,7 @@ module.exports =
 	    this.defaults = new Defaults();
 	    deepMixIn(this.defaults, uri);
 	    this.client = new DSUtils.Promise(function (resolve, reject) {
-	      _mongodb.MongoClient.connect(uri.uri, function (err, db) {
+	      MongoClient.connect(uri.uri, function (err, db) {
 	        return err ? reject(err) : resolve(db);
 	      });
 	    });
@@ -128,7 +108,7 @@ module.exports =
 	      params = params || {};
 	      params.where = params.where || {};
 
-	      forEach((0, _moutObjectKeys2['default'])(params), function (k) {
+	      forEach(keys(params), function (k) {
 	        var v = params[k];
 	        if (!contains(reserved, k)) {
 	          if (isObject(v)) {
@@ -144,7 +124,7 @@ module.exports =
 
 	      var query = {};
 
-	      if (!(0, _moutLangIsEmpty2['default'])(params.where)) {
+	      if (!isEmpty(params.where)) {
 	        forOwn(params.where, function (criteria, field) {
 	          if (!isObject(criteria)) {
 	            params.where[field] = {
@@ -303,11 +283,11 @@ module.exports =
 	        return new DSUtils.Promise(function (resolve, reject) {
 	          var params = {};
 	          params[resourceConfig.idAttribute] = id;
-	          if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && _bson.ObjectID.isValid(id)) {
-	            params[resourceConfig.idAttribute] = _bson.ObjectID.createFromHexString(id);
+	          if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
+	            params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id);
 	          }
 	          options.fields = options.fields || {};
-	          client.collection(resourceConfig.table || (0, _moutStringUnderscore2['default'])(resourceConfig.name)).findOne(params, options, function (err, r) {
+	          client.collection(resourceConfig.table || underscore(resourceConfig.name)).findOne(params, options, function (err, r) {
 	            if (err) {
 	              reject(err);
 	            } else if (!r) {
@@ -330,7 +310,7 @@ module.exports =
 	      return this.getClient().then(function (client) {
 	        return new DSUtils.Promise(function (resolve, reject) {
 	          options.fields = options.fields || {};
-	          client.collection(resourceConfig.table || (0, _moutStringUnderscore2['default'])(resourceConfig.name)).find(query, options).toArray(function (err, r) {
+	          client.collection(resourceConfig.table || underscore(resourceConfig.name)).find(query, options).toArray(function (err, r) {
 	            if (err) {
 	              reject(err);
 	            } else {
@@ -346,10 +326,10 @@ module.exports =
 	      var _this3 = this;
 
 	      options = this.origify(options);
-	      attrs = removeCircular((0, _moutObjectOmit2['default'])(attrs, resourceConfig.relationFields || []));
+	      attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
 	      return this.getClient().then(function (client) {
 	        return new DSUtils.Promise(function (resolve, reject) {
-	          var collection = client.collection(resourceConfig.table || (0, _moutStringUnderscore2['default'])(resourceConfig.name));
+	          var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
 	          var method = collection.insertOne ? DSUtils.isArray(attrs) ? 'insertMany' : 'insertOne' : 'insert';
 	          collection[method](attrs, options, function (err, r) {
 	            if (err) {
@@ -368,7 +348,7 @@ module.exports =
 	    value: function update(resourceConfig, id, attrs, options) {
 	      var _this4 = this;
 
-	      attrs = removeCircular((0, _moutObjectOmit2['default'])(attrs, resourceConfig.relationFields || []));
+	      attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
 	      options = this.origify(options);
 	      return this.find(resourceConfig, id, options).then(function () {
 	        return _this4.getClient();
@@ -376,10 +356,10 @@ module.exports =
 	        return new DSUtils.Promise(function (resolve, reject) {
 	          var params = {};
 	          params[resourceConfig.idAttribute] = id;
-	          if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && _bson.ObjectID.isValid(id)) {
-	            params[resourceConfig.idAttribute] = _bson.ObjectID.createFromHexString(id);
+	          if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
+	            params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id);
 	          }
-	          var collection = client.collection(resourceConfig.table || (0, _moutStringUnderscore2['default'])(resourceConfig.name));
+	          var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
 	          collection[collection.updateOne ? 'updateOne' : 'update'](params, { $set: attrs }, options, function (err) {
 	            if (err) {
 	              reject(err);
@@ -398,7 +378,7 @@ module.exports =
 	      var _this5 = this;
 
 	      var ids = [];
-	      attrs = removeCircular((0, _moutObjectOmit2['default'])(attrs, resourceConfig.relationFields || []));
+	      attrs = removeCircular(omit(attrs, resourceConfig.relationFields || []));
 	      options = this.origify(options ? copy(options) : {});
 	      var _options = copy(options);
 	      _options.multi = true;
@@ -407,15 +387,15 @@ module.exports =
 	        queryOptions.$set = attrs;
 	        var query = _this5.getQuery(resourceConfig, params);
 	        return _this5.findAll(resourceConfig, params, options).then(function (items) {
-	          ids = (0, _moutArrayMap2['default'])(items, function (item) {
+	          ids = map(items, function (item) {
 	            var id = item[resourceConfig.idAttribute];
-	            if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && _bson.ObjectID.isValid(id)) {
-	              return _bson.ObjectID.createFromHexString(id);
+	            if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
+	              return ObjectID.createFromHexString(id);
 	            }
 	            return id;
 	          });
 	          return new DSUtils.Promise(function (resolve, reject) {
-	            var collection = client.collection(resourceConfig.table || (0, _moutStringUnderscore2['default'])(resourceConfig.name));
+	            var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
 	            collection[collection.updateMany ? 'updateMany' : 'update'](query, queryOptions, _options, function (err) {
 	              if (err) {
 	                reject(err);
@@ -441,10 +421,10 @@ module.exports =
 	        return new DSUtils.Promise(function (resolve, reject) {
 	          var params = {};
 	          params[resourceConfig.idAttribute] = id;
-	          if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && _bson.ObjectID.isValid(id)) {
-	            params[resourceConfig.idAttribute] = _bson.ObjectID.createFromHexString(id);
+	          if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
+	            params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id);
 	          }
-	          var collection = client.collection(resourceConfig.table || (0, _moutStringUnderscore2['default'])(resourceConfig.name));
+	          var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
 	          collection[collection.deleteOne ? 'deleteOne' : 'remove'](params, options, function (err) {
 	            if (err) {
 	              reject(err);
@@ -465,7 +445,7 @@ module.exports =
 	        deepMixIn(options, _this6.getQueryOptions(resourceConfig, params));
 	        var query = _this6.getQuery(resourceConfig, params);
 	        return new DSUtils.Promise(function (resolve, reject) {
-	          var collection = client.collection(resourceConfig.table || (0, _moutStringUnderscore2['default'])(resourceConfig.name));
+	          var collection = client.collection(resourceConfig.table || underscore(resourceConfig.name));
 	          collection[collection.deleteMany ? 'deleteMany' : 'remove'](query, options, function (err) {
 	            if (err) {
 	              reject(err);
@@ -486,51 +466,33 @@ module.exports =
 
 /***/ },
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = require("mout/object/keys");
-
-/***/ },
-/* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	module.exports = require("mongodb");
 
 /***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/* 2 */
+/***/ function(module, exports) {
 
 	module.exports = require("bson");
 
 /***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/* 3 */
+/***/ function(module, exports) {
 
 	module.exports = require("js-data");
 
 /***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/* 4 */
+/***/ function(module, exports) {
 
 	module.exports = require("mout/string/underscore");
 
 /***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = require("mout/object/omit");
-
-/***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/* 5 */
+/***/ function(module, exports) {
 
 	module.exports = require("mout/array/map");
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = require("mout/lang/isEmpty");
 
 /***/ }
 /******/ ]);
