@@ -3,12 +3,11 @@
 
 var assert = require('chai').assert;
 var mocha = require('mocha');
-var sinon = require('sinon');
 var JSData = require('js-data');
 JSData.DSUtils.Promise = require('bluebird');
 var DSMongoDBAdapter = require('./');
 
-var adapter, store, DSUtils, DSErrors, User, Post, Comment;
+var adapter, store, DSUtils, DSErrors, Profile, User, Post, Comment;
 
 var globals = module.exports = {
   fail: function (msg) {
@@ -34,7 +33,6 @@ var globals = module.exports = {
   }],
   TYPES_EXCEPT_FUNCTION: ['string', 123, 123.123, null, undefined, {}, [], true, false],
   assert: assert,
-  sinon: sinon,
   adapter: undefined
 };
 
@@ -57,6 +55,9 @@ beforeEach(function () {
   store.registerAdapter('mongo', adapter, { 'default': true });
   DSUtils = JSData.DSUtils;
   DSErrors = JSData.DSErrors;
+  globals.Profile = global.Profile = Profile = store.defineResource({
+    name: 'profile'
+  });
   globals.User = global.User = User = store.defineResource({
     name: 'user',
     relations: {
@@ -64,6 +65,12 @@ beforeEach(function () {
         post: {
           localField: 'posts',
           foreignKey: 'post'
+        }
+      },
+      hasOne: {
+        profile: {
+          localField: 'profile',
+          localKey: 'profileId'
         }
       }
     }
@@ -115,7 +122,13 @@ afterEach(function (done) {
   globals.adapter = null;
   global.adapter = null;
 
-  adapter.destroyAll(User, {}).then(function () {
+  adapter.destroyAll(Comment).then(function () {
+    return adapter.destroyAll(Post);
+  }).then(function () {
+    return adapter.destroyAll(User);
+  }).then(function () {
+    return adapter.destroyAll(Profile);
+  }).then(function () {
     done();
   }, done);
 });

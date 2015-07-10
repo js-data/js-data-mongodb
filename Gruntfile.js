@@ -49,6 +49,7 @@ module.exports = function (grunt) {
         },
         externals: [
           'mout/string/underscore',
+          'mout/array/unique',
           'mout/array/map',
           'js-data',
           'mongodb',
