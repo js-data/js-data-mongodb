@@ -7,7 +7,7 @@ describe('DSMongoDBAdapter#findAll', function () {
       age: 30
     }).then(function (users) {
       assert.equal(users.length, 0);
-      return adapter.create(User, { name: 'John' });
+      return adapter.create(User, {name: 'John'});
     }).then(function (user) {
       id = user._id;
       return adapter.findAll(User, {
@@ -15,7 +15,7 @@ describe('DSMongoDBAdapter#findAll', function () {
       });
     }).then(function (users) {
       assert.equal(users.length, 1);
-      assert.deepEqual(users[0], { _id: id, name: 'John' });
+      assert.equalObjects(users[0], {_id: id, name: 'John'});
       return adapter.destroy(User, id);
     }).then(function (destroyedUser) {
       assert.isFalse(!!destroyedUser);
@@ -32,7 +32,7 @@ describe('DSMongoDBAdapter#findAll', function () {
       }
     }).then(function (users) {
       assert.equal(users.length, 0);
-      return adapter.create(User, { name: 'John' });
+      return adapter.create(User, {name: 'John'});
     }).then(function (user) {
       id = user._id;
       return adapter.findAll(User, {
@@ -40,7 +40,7 @@ describe('DSMongoDBAdapter#findAll', function () {
       });
     }).then(function (users) {
       assert.equal(users.length, 1);
-      assert.deepEqual(users[0], { _id: id, name: 'John' });
+      assert.equalObjects(users[0], {_id: id, name: 'John'});
       return adapter.destroy(User, id);
     }).then(function (destroyedUser) {
       assert.isFalse(!!destroyedUser);

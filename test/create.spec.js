@@ -1,7 +1,7 @@
 describe('DSMongoDBAdapter#create', function () {
   it('should create a user in MongoDB', function () {
     var id;
-    return adapter.create(User, { name: 'John' }).then(function (user) {
+    return adapter.create(User, {name: 'John'}).then(function (user) {
       id = user._id;
       assert.equal(user.name, 'John');
       assert.isDefined(user._id);
@@ -10,7 +10,7 @@ describe('DSMongoDBAdapter#create', function () {
       .then(function (user) {
         assert.equal(user.name, 'John');
         assert.isDefined(user._id);
-        assert.deepEqual(user, { _id: id, name: 'John' });
+        assert.equalObjects(user, {_id: id, name: 'John'});
         return adapter.destroy(User, user._id);
       })
       .then(function (user) {
