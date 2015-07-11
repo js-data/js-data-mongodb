@@ -1,7 +1,7 @@
 {
   "name": "js-data-mongodb",
   "description": "MongoDB adapter for js-data.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "homepage": "http://www.js-data.io/docs/dsmongodbadapter",
   "repository": {
     "type": "git",
