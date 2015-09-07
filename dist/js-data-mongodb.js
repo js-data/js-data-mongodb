@@ -55,12 +55,12 @@ module.exports =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var mongodb = __webpack_require__(2);
+	var mongodb = __webpack_require__(1);
 	var MongoClient = mongodb.MongoClient;
-	var bson = __webpack_require__(3);
-	var map = __webpack_require__(4);
+	var bson = __webpack_require__(2);
+	var map = __webpack_require__(3);
 	var ObjectID = bson.ObjectID;
-	var JSData = __webpack_require__(1);
+	var JSData = __webpack_require__(4);
 	var underscore = __webpack_require__(5);
 	var unique = __webpack_require__(6);
 	var DSUtils = JSData.DSUtils;
@@ -141,6 +141,8 @@ module.exports =
 	            } else if (op === '<=') {
 	              query[field] = query[field] || {};
 	              query[field].$lte = v;
+	            } else if (op === 'contains') {
+	              query[field] = new RegExp(v, 'i');
 	            } else if (op === 'in') {
 	              query[field] = query[field] || {};
 	              query[field].$in = v;
@@ -187,6 +189,11 @@ module.exports =
 	                '$lte': v
 	              };
 	              query.$or.push(orLteQuery);
+	            } else if (op === '|contains') {
+	              query.$or = query.$or || [];
+	              var orContainsQuery = {};
+	              orContainsQuery[field] = new RegExp(v, 'i');
+	              query.$or.push(orContainsQuery);
 	            } else if (op === '|in') {
 	              query.$or = query.$or || [];
 	              var orInQuery = {};
@@ -656,25 +663,25 @@ module.exports =
 /* 1 */
 /***/ function(module, exports) {
 
-	module.exports = require("js-data");
+	module.exports = require("mongodb");
 
 /***/ },
 /* 2 */
 /***/ function(module, exports) {
 
-	module.exports = require("mongodb");
+	module.exports = require("bson");
 
 /***/ },
 /* 3 */
 /***/ function(module, exports) {
 
-	module.exports = require("bson");
+	module.exports = require("mout/array/map");
 
 /***/ },
 /* 4 */
 /***/ function(module, exports) {
 
-	module.exports = require("mout/array/map");
+	module.exports = require("js-data");
 
 /***/ },
 /* 5 */

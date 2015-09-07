@@ -84,6 +84,8 @@ class DSMongoDBAdapter {
           } else if (op === '<=') {
             query[field] = query[field] || {};
             query[field].$lte = v;
+          } else if (op === 'contains') {
+            query[field] = new RegExp(v, 'i');
           } else if (op === 'in') {
             query[field] = query[field] || {};
             query[field].$in = v;
@@ -130,6 +132,11 @@ class DSMongoDBAdapter {
               '$lte': v
             };
             query.$or.push(orLteQuery);
+          } else if (op === '|contains') {
+            query.$or = query.$or || [];
+            let orContainsQuery = {};
+            orContainsQuery[field] = new RegExp(v, 'i');
+            query.$or.push(orContainsQuery);
           } else if (op === '|in') {
             query.$or = query.$or || [];
             let orInQuery = {};

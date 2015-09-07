@@ -46,6 +46,35 @@ describe('DSMongoDBAdapter#findAll', function () {
       assert.isFalse(!!destroyedUser);
     });
   });
+  it('should filter users using the "contains" operator', function () {
+    var id;
+
+    return adapter.findAll(User, {
+      where: {
+        name: {
+          'contains': 'J'
+        }
+      }
+    }).then(function (users) {
+      assert.equal(users.length, 0);
+      return adapter.create(User, {name: 'John'});
+    }).then(function (user) {
+      id = user._id;
+      return adapter.findAll(User, {
+        where: {
+          name: {
+            'contains': 'J'
+          }
+        }
+      });
+    }).then(function (users) {
+      assert.equal(users.length, 1);
+      assert.equalObjects(users[0], {_id: id, name: 'John'});
+      return adapter.destroy(User, id);
+    }).then(function (destroyedUser) {
+      assert.isFalse(!!destroyedUser);
+    });
+  });
   it('should load belongsTo relations', function () {
     return adapter.create(Profile, {
       email: 'foo@test.com'
