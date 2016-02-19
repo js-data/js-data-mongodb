@@ -1,3 +1,8 @@
+##### 0.6.0 - 18 February 2016
+
+- Upgraded dependencies
+- Now using js-data-adapter-tests
+
 ##### 0.5.1 - 10 July 2015
 
 ###### Backwards compatible bug fixes

@@ -1,25 +1,20 @@
-<img src="https://raw.githubusercontent.com/js-data/js-data/master/js-data.png" alt="js-data logo" title="js-data" align="right" width="64" height="64" />
+<img src="https://raw.githubusercontent.com/js-data/js-data/master/js-data.png" alt="js-data logo" title="js-data" align="right" width="96" height="96" />
 
-## js-data-mongodb [![npm version](https://img.shields.io/npm/v/js-data-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/js-data-mongodb) [![Circle CI](https://img.shields.io/circleci/project/js-data/js-data-mongodb/master.svg?style=flat-square)](https://circleci.com/gh/js-data/js-data-mongodb/tree/master) [![npm downloads](https://img.shields.io/npm/dm/js-data-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/js-data-mongodb) [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/js-data/js-data-mongodb/blob/master/LICENSE)
+# js-data-mongodb
+
+[![Slack Status][sl_b]][sl_l]
+[![npm version][npm_b]][npm_l]
+[![Circle CI][circle_b]][circle_l]
+[![npm downloads][dn_b]][dn_l]
+[![Coverage Status][cov_b]][cov_l]
+[![Codacy][cod_b]][cod_l]
 
 MongoDB adapter for [js-data](http://www.js-data.io/).
 
-### API Documentation
+## API Documentation
 [DSMongoDBAdapter](http://www.js-data.io/docs/dsmongodbadapter)
 
-### Project Status
-
-__Latest Release:__ [![Latest Release](https://img.shields.io/github/release/js-data/js-data-mongodb.svg?style=flat-square)](https://github.com/js-data/js-data-mongodb/releases)
-
-__Status:__
-
-[![Dependency Status](https://img.shields.io/gemnasium/js-data/js-data-mongodb.svg?style=flat-square)](https://gemnasium.com/js-data/js-data-mongodb) [![Codacity](https://img.shields.io/codacy/1f45ede49dfb4bdea68f46ca55631968.svg?style=flat-square)](https://www.codacy.com/public/jasondobry/js-data-mongodb/dashboard)
-
-__Supported Platforms:__
-
-[![node version](https://img.shields.io/badge/Node-0.10%2B-green.svg?style=flat-square)](https://github.com/js-data/js-data)
-
-### Quick Start
+## Quick Start
 `npm install --save js-data js-data-mongodb`.
 
 ```js
@@ -41,60 +36,46 @@ var User = store.defineResource({
 });
 ```
 
-### Changelog
-[CHANGELOG.md](https://github.com/js-data/js-data-mongodb/blob/master/CHANGELOG.md)
+## Changelog
+See [CHANGELOG.md](https://github.com/js-data/js-data-mongodb/blob/master/CHANGELOG.md).
 
-### Community
-- [Gitter Channel](https://gitter.im/js-data/js-data) - Better than IRC!
+## Community
+- [StackOverflow Channel][so]
+- [Slack Chat][sl_l] [![Slack Status][sl_b]][sl_l]
 - [Announcements](http://www.js-data.io/blog)
-- [Mailing List](https://groups.io/org/groupsio/jsdata) - Ask your questions!
-- [Issues](https://github.com/js-data/js-data-mongodb/issues) - Found a bug? Feature request? Submit an issue!
-- [GitHub](https://github.com/js-data/js-data-mongodb) - View the source code for js-data.
-- [Contributing Guide](https://github.com/js-data/js-data-mongodb/blob/master/CONTRIBUTING.md)
+- [Mailing List](ml)
+- [Issue Tracker](https://github.com/js-data/js-data-mongodb/issues)
 
-### Contributing
+## Support
 
-First, support is handled via the [Mailing List](https://groups.io/org/groupsio/jsdata). Ask your questions there.
+Support questions are handled via [StackOverflow][so], [Slack][sl_l], and the
+[Mailing List][ml]. Ask your questions there.
 
-When submitting issues on GitHub, please include as much detail as possible to make debugging quick and easy.
+When submitting bug reports on GitHub, please include as much detail as possible
+to make debugging quick and easy.
 
-- good - Your versions of js-data, js-data-mongodb, etc., relevant console logs/error, code examples that revealed the issue
-- better - A [plnkr](http://plnkr.co/), [fiddle](http://jsfiddle.net/), or [bin](http://jsbin.com/?html,output) that demonstrates the issue
-- best - A Pull Request that fixes the issue, including test coverage for the issue and the fix
+## Contributing
 
-[Github Issues](https://github.com/js-data/js-data-mongodb/issues).
+See [CONTRIBUTING.md](https://github.com/js-data/js-data-mongodb/blob/master/CONTRIBUTING.md).
 
-#### Pull Requests
-
-1. Contribute to the issue that is the reason you'll be developing in the first place
-1. Fork js-data-mongodb
-1. `git clone https://github.com/<you>/js-data-mongodb.git`
-1. `cd js-data-mongodb; npm install; bower install;`
-1. `grunt go` (builds and starts a watch)
-1. (in another terminal) `grunt karma:dev` (runs the tests)
-1. Write your code, including relevant documentation and tests
-1. Submit a PR and we'll review
-
-### License
+## License
 
 The MIT License (MIT)
 
-Copyright (c) 2014-2015 Jason Dobry
+See [LICENSE](https://github.com/js-data/js-data-mongodb/blob/master/LICENSE).
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+[sl_b]: http://slack.js-data.io/badge.svg
+[sl_l]: http://slack.js-data.io
+[npm_b]: https://img.shields.io/npm/v/js-data-mongodb.svg?style=flat
+[npm_l]: https://www.npmjs.org/package/js-data-mongodb
+[circle_b]: https://img.shields.io/circleci/project/js-data/js-data-mongodb/master.svg?style=flat
+[circle_l]: https://circleci.com/gh/js-data/js-data-mongodb/tree/master
+[dn_b]: https://img.shields.io/npm/dm/js-data-mongodb.svg?style=flat
+[dn_l]: https://www.npmjs.org/package/js-data-mongodb
+[cov_b]: https://img.shields.io/coveralls/js-data/js-data-mongodb/master.svg?style=flat
+[cov_l]: https://coveralls.io/github/js-data/js-data-mongodb?branch=master
+[cod_b]: https://img.shields.io/codacy/1f45ede49dfb4bdea68f46ca55631968.svg
+[cod_l]: https://www.codacy.com/app/jasondobry/js-data-mongodb/dashboard
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+[ml]: https://groups.io/org/groupsio/jsdata
+[so]: http://stackoverflow.com/questions/tagged/jsdata

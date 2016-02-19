@@ -1,3 +1,7 @@
+machine:
+  node:
+    version: 4.1.0
+
 test:
-  post:
-    - grunt coveralls || true
+  override:
+    - npm run ci

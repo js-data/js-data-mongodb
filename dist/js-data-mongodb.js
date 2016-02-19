@@ -2,41 +2,41 @@ module.exports =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-
+/******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-
+/******/
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-
+/******/
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			exports: {},
 /******/ 			id: moduleId,
 /******/ 			loaded: false
 /******/ 		};
-
+/******/
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
+/******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.loaded = true;
-
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-
-
+/******/
+/******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-
+/******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-
+/******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-
+/******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(0);
 /******/ })
@@ -45,50 +45,50 @@ module.exports =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
+	'use strict';
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
 	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-	var mongodb = __webpack_require__(2);
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var mongodb = __webpack_require__(1);
 	var MongoClient = mongodb.MongoClient;
-	var bson = __webpack_require__(3);
-	var map = __webpack_require__(4);
+	var bson = __webpack_require__(2);
+	var map = __webpack_require__(3);
 	var ObjectID = bson.ObjectID;
-	var JSData = __webpack_require__(1);
+	var JSData = __webpack_require__(4);
 	var underscore = __webpack_require__(5);
 	var unique = __webpack_require__(6);
 	var DSUtils = JSData.DSUtils;
-
+	
+	
 	var reserved = ['orderBy', 'sort', 'limit', 'offset', 'skip', 'where'];
-
+	
 	var Defaults = function Defaults() {
 	  _classCallCheck(this, Defaults);
 	};
-
+	
 	Defaults.prototype.translateId = true;
-
-	var DSMongoDBAdapter = (function () {
-	  function DSMongoDBAdapter(uri) {
+	
+	var DSMongoDBAdapter = function () {
+	  function DSMongoDBAdapter(opts) {
 	    _classCallCheck(this, DSMongoDBAdapter);
-
-	    if (typeof uri === 'string') {
-	      uri = { uri: uri };
+	
+	    if (typeof opts === 'string') {
+	      opts = { uri: opts };
 	    }
+	    opts.uri || (opts.uri = 'mongodb://localhost:27017');
 	    this.defaults = new Defaults();
-	    DSUtils.deepMixIn(this.defaults, uri);
+	    DSUtils.deepMixIn(this.defaults, opts);
 	    this.client = new DSUtils.Promise(function (resolve, reject) {
-	      MongoClient.connect(uri.uri, function (err, db) {
+	      MongoClient.connect(opts.uri, function (err, db) {
 	        return err ? reject(err) : resolve(db);
 	      });
 	    });
 	  }
-
+	
 	  _createClass(DSMongoDBAdapter, [{
 	    key: 'getClient',
 	    value: function getClient() {
@@ -99,10 +99,9 @@ module.exports =
 	    value: function getQuery(resourceConfig, params) {
 	      params = params || {};
 	      params.where = params.where || {};
-
-	      DSUtils.forEach(DSUtils.keys(params), function (k) {
-	        var v = params[k];
-	        if (!DSUtils.contains(reserved, k)) {
+	
+	      DSUtils.forOwn(params, function (v, k) {
+	        if (reserved.indexOf(k) === -1) {
 	          if (DSUtils.isObject(v)) {
 	            params.where[k] = v;
 	          } else {
@@ -113,10 +112,10 @@ module.exports =
 	          delete params[k];
 	        }
 	      });
-
+	
 	      var query = {};
-
-	      if (!DSUtils.isEmpty(params.where)) {
+	
+	      if (Object.keys(params.where).length) {
 	        DSUtils.forOwn(params.where, function (criteria, field) {
 	          if (!DSUtils.isObject(criteria)) {
 	            params.where[field] = {
@@ -205,7 +204,7 @@ module.exports =
 	          });
 	        });
 	      }
-
+	
 	      return query;
 	    }
 	  }, {
@@ -214,9 +213,9 @@ module.exports =
 	      params = params || {};
 	      params.orderBy = params.orderBy || params.sort;
 	      params.skip = params.skip || params.offset;
-
+	
 	      var queryOptions = {};
-
+	
 	      if (params.orderBy) {
 	        if (DSUtils.isString(params.orderBy)) {
 	          params.orderBy = [[params.orderBy, 'asc']];
@@ -228,15 +227,15 @@ module.exports =
 	        }
 	        queryOptions.sort = params.orderBy;
 	      }
-
+	
 	      if (params.skip) {
-	        queryOptions.skip = params.skip;
+	        queryOptions.skip = +params.skip;
 	      }
-
+	
 	      if (params.limit) {
-	        queryOptions.limit = params.limit;
+	        queryOptions.limit = +params.limit;
 	      }
-
+	
 	      return queryOptions;
 	    }
 	  }, {
@@ -269,10 +268,10 @@ module.exports =
 	    key: 'find',
 	    value: function find(resourceConfig, id, options) {
 	      var _this = this;
-
+	
 	      var instance = undefined;
 	      options = this.origify(options);
-	      options['with'] = options['with'] || [];
+	      options.with = options.with || [];
 	      return this.getClient().then(function (client) {
 	        return new DSUtils.Promise(function (resolve, reject) {
 	          var params = {};
@@ -294,32 +293,32 @@ module.exports =
 	      }).then(function (_instance) {
 	        instance = _instance;
 	        var tasks = [];
-
+	
 	        DSUtils.forEach(resourceConfig.relationList, function (def) {
 	          var relationName = def.relation;
 	          var relationDef = resourceConfig.getResource(relationName);
 	          var containedName = null;
-	          if (DSUtils.contains(options['with'], relationName)) {
+	          if (DSUtils.contains(options.with, relationName)) {
 	            containedName = relationName;
-	          } else if (DSUtils.contains(options['with'], def.localField)) {
+	          } else if (DSUtils.contains(options.with, def.localField)) {
 	            containedName = def.localField;
 	          }
 	          if (containedName) {
 	            (function () {
 	              var __options = DSUtils.deepMixIn({}, options.orig ? options.orig() : options);
-	              __options['with'] = options['with'].slice();
+	              __options.with = options.with.slice();
 	              __options = DSUtils._(relationDef, __options);
-	              DSUtils.remove(__options['with'], containedName);
-	              DSUtils.forEach(__options['with'], function (relation, i) {
+	              DSUtils.remove(__options.with, containedName);
+	              DSUtils.forEach(__options.with, function (relation, i) {
 	                if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
-	                  __options['with'][i] = relation.substr(containedName.length + 1);
+	                  __options.with[i] = relation.substr(containedName.length + 1);
 	                } else {
-	                  __options['with'][i] = '';
+	                  __options.with[i] = '';
 	                }
 	              });
-
+	
 	              var task = undefined;
-
+	
 	              if ((def.type === 'hasOne' || def.type === 'hasMany') && def.foreignKey) {
 	                task = _this.findAll(resourceConfig.getResource(relationName), {
 	                  where: _defineProperty({}, def.foreignKey, {
@@ -356,14 +355,14 @@ module.exports =
 	                  return relatedItem;
 	                });
 	              }
-
+	
 	              if (task) {
 	                tasks.push(task);
 	              }
 	            })();
 	          }
 	        });
-
+	
 	        return DSUtils.Promise.all(tasks);
 	      }).then(function () {
 	        return instance;
@@ -373,10 +372,10 @@ module.exports =
 	    key: 'findAll',
 	    value: function findAll(resourceConfig, params, options) {
 	      var _this2 = this;
-
+	
 	      var items = null;
 	      options = this.origify(options ? DSUtils.copy(options) : {});
-	      options['with'] = options['with'] || [];
+	      options.with = options.with || [];
 	      DSUtils.deepMixIn(options, this.getQueryOptions(resourceConfig, params));
 	      var query = this.getQuery(resourceConfig, params);
 	      return this.getClient().then(function (client) {
@@ -397,27 +396,27 @@ module.exports =
 	          var relationName = def.relation;
 	          var relationDef = resourceConfig.getResource(relationName);
 	          var containedName = null;
-	          if (DSUtils.contains(options['with'], relationName)) {
+	          if (DSUtils.contains(options.with, relationName)) {
 	            containedName = relationName;
-	          } else if (DSUtils.contains(options['with'], def.localField)) {
+	          } else if (DSUtils.contains(options.with, def.localField)) {
 	            containedName = def.localField;
 	          }
 	          if (containedName) {
 	            (function () {
 	              var __options = DSUtils.deepMixIn({}, options.orig ? options.orig() : options);
-	              __options['with'] = options['with'].slice();
+	              __options.with = options.with.slice();
 	              __options = DSUtils._(relationDef, __options);
-	              DSUtils.remove(__options['with'], containedName);
-	              DSUtils.forEach(__options['with'], function (relation, i) {
+	              DSUtils.remove(__options.with, containedName);
+	              DSUtils.forEach(__options.with, function (relation, i) {
 	                if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
-	                  __options['with'][i] = relation.substr(containedName.length + 1);
+	                  __options.with[i] = relation.substr(containedName.length + 1);
 	                } else {
-	                  __options['with'][i] = '';
+	                  __options.with[i] = '';
 	                }
 	              });
-
+	
 	              var task = undefined;
-
+	
 	              if ((def.type === 'hasOne' || def.type === 'hasMany') && def.foreignKey) {
 	                task = _this2.findAll(resourceConfig.getResource(relationName), {
 	                  where: _defineProperty({}, def.foreignKey, {
@@ -496,7 +495,7 @@ module.exports =
 	                  return relatedItems;
 	                });
 	              }
-
+	
 	              if (task) {
 	                tasks.push(task);
 	              }
@@ -512,7 +511,7 @@ module.exports =
 	    key: 'create',
 	    value: function create(resourceConfig, attrs, options) {
 	      var _this3 = this;
-
+	
 	      options = this.origify(options);
 	      attrs = DSUtils.removeCircular(DSUtils.omit(attrs, resourceConfig.relationFields || []));
 	      return this.getClient().then(function (client) {
@@ -535,7 +534,7 @@ module.exports =
 	    key: 'update',
 	    value: function update(resourceConfig, id, attrs, options) {
 	      var _this4 = this;
-
+	
 	      attrs = DSUtils.removeCircular(DSUtils.omit(attrs, resourceConfig.relationFields || []));
 	      options = this.origify(options);
 	      return this.find(resourceConfig, id, options).then(function () {
@@ -564,7 +563,7 @@ module.exports =
 	    key: 'updateAll',
 	    value: function updateAll(resourceConfig, attrs, params, options) {
 	      var _this5 = this;
-
+	
 	      var ids = [];
 	      attrs = DSUtils.removeCircular(DSUtils.omit(attrs, resourceConfig.relationFields || []));
 	      options = this.origify(options ? DSUtils.copy(options) : {});
@@ -627,7 +626,7 @@ module.exports =
 	    key: 'destroyAll',
 	    value: function destroyAll(resourceConfig, params, options) {
 	      var _this6 = this;
-
+	
 	      options = this.origify(options ? DSUtils.copy(options) : {});
 	      return this.getClient().then(function (client) {
 	        DSUtils.deepMixIn(options, _this6.getQueryOptions(resourceConfig, params));
@@ -645,36 +644,35 @@ module.exports =
 	      });
 	    }
 	  }]);
-
+	
 	  return DSMongoDBAdapter;
-	})();
-
-	exports['default'] = DSMongoDBAdapter;
-	module.exports = exports['default'];
+	}();
+	
+	module.exports = DSMongoDBAdapter;
 
 /***/ },
 /* 1 */
 /***/ function(module, exports) {
 
-	module.exports = require("js-data");
+	module.exports = require("mongodb");
 
 /***/ },
 /* 2 */
 /***/ function(module, exports) {
 
-	module.exports = require("mongodb");
+	module.exports = require("bson");
 
 /***/ },
 /* 3 */
 /***/ function(module, exports) {
 
-	module.exports = require("bson");
+	module.exports = require("mout/array/map");
 
 /***/ },
 /* 4 */
 /***/ function(module, exports) {
 
-	module.exports = require("mout/array/map");
+	module.exports = require("js-data");
 
 /***/ },
 /* 5 */
@@ -690,3 +688,4 @@ module.exports =
 
 /***/ }
 /******/ ]);
+//# sourceMappingURL=js-data-mongodb.js.map

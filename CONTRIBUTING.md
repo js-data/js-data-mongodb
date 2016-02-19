@@ -1,6 +1,7 @@
 # Contributing Guide
 
-First, support is handled via the [Mailing List](https://groups.io/org/groupsio/jsdata). Ask your questions there.
+Support questions are handled via [StackOverflow][so], [Slack][slack], and the
+[Mailing List][ml]. Ask your questions there.
 
 When submitting issues on GitHub, please include as much detail as possible to make debugging quick and easy.
 
@@ -20,3 +21,7 @@ When submitting issues on GitHub, please include as much detail as possible to m
 1. (in another terminal) `grunt karma:dev` (runs the tests)
 1. Write your code, including relevant documentation and tests
 1. Submit a PR and we'll review
+
+[slack]: http://slack.js-data.io
+[ml]: https://groups.io/org/groupsio/jsdata
+[so]: http://stackoverflow.com/questions/tagged/jsdata
