@@ -1,3 +1,17 @@
+##### 0.7.0 - 19 February 2016
+
+###### Backwards compatible API changes
+- Decomposed eager loading functionality into overridable methods for greater flexibility
+  - New methods: loadHasMany, loadBelongsTo, loadHasOne, makeBelongsToForeignKey, makeHasManyForeignKey, toObjectID
+  - Example use case: Override makeBelongsToForeignKey because your foreignKeys are saved as ObjectIDs, but the default is to assume they are plain a string/number
+
+###### Backwards compatible bug fixes
+- #12 - eager loading relations doesn't check for ObjectID
+
+###### Other
+- Added some JSDoc comments
+- Cleaned up some code style
+
 ##### 0.6.0 - 18 February 2016
 
 - Upgraded dependencies
