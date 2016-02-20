@@ -11,8 +11,15 @@
 
 MongoDB adapter for [js-data](http://www.js-data.io/).
 
-## API Documentation
-[DSMongoDBAdapter](http://www.js-data.io/docs/dsmongodbadapter)
+## Table of contents
+
+* [Quick start](#quick-start)
+* [Documentation](#documentation)
+* [API Reference](#api-reference)
+* [Support](#support)
+* [Community](#community)
+* [Contributing](#contributing)
+* [License](#license)
 
 ## Quick Start
 `npm install --save js-data js-data-mongodb`.
@@ -36,15 +43,13 @@ var User = store.defineResource({
 });
 ```
 
-## Changelog
-See [CHANGELOG.md](https://github.com/js-data/js-data-mongodb/blob/master/CHANGELOG.md).
+### Documentation
+- [Getting Started with js-data](http://www.js-data.io/docs/home)
+- [js-data-mongodb](http://www.js-data.io/docs/js-data-mongodb)
+- [CHANGELOG.md](https://github.com/js-data/js-data-mongodb/blob/master/CHANGELOG.md)
 
-## Community
-- [StackOverflow Channel][so]
-- [Slack Chat][sl_l] [![Slack Status][sl_b]][sl_l]
-- [Announcements](http://www.js-data.io/blog)
-- [Mailing List](ml)
-- [Issue Tracker](https://github.com/js-data/js-data-mongodb/issues)
+## API Reference
+- [js-data-mongodb](http://api.js-data.io/js-data-mongodb/)
 
 ## Support
 
@@ -53,6 +58,13 @@ Support questions are handled via [StackOverflow][so], [Slack][sl_l], and the
 
 When submitting bug reports on GitHub, please include as much detail as possible
 to make debugging quick and easy.
+
+## Community
+- [StackOverflow Channel][so]
+- [Slack Chat][sl_l] [![Slack Status][sl_b]][sl_l]
+- [Announcements](http://www.js-data.io/blog)
+- [Mailing List](ml)
+- [Issue Tracker](https://github.com/js-data/js-data-mongodb/issues)
 
 ## Contributing
 
