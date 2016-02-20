@@ -1,11 +1,9 @@
 const mongodb = require('mongodb')
 const MongoClient = mongodb.MongoClient
 const bson = require('bson')
-const map = require('mout/array/map')
 const ObjectID = bson.ObjectID
 const JSData = require('js-data')
 const underscore = require('mout/string/underscore')
-const unique = require('mout/array/unique')
 const { DSUtils } = JSData
 
 const reserved = [
@@ -17,232 +15,499 @@ const reserved = [
   'where'
 ]
 
-class Defaults {
-
-}
+function Defaults () {}
 
 Defaults.prototype.translateId = true
 
-class DSMongoDBAdapter {
-  constructor (opts) {
-    if (typeof opts === 'string') {
-      opts = { uri: opts }
+const addHiddenPropsToTarget = function (target, props) {
+  DSUtils.forOwn(props, function (value, key) {
+    props[key] = {
+      writable: true,
+      value
     }
-    opts.uri || (opts.uri = 'mongodb://localhost:27017')
-    this.defaults = new Defaults()
-    DSUtils.deepMixIn(this.defaults, opts)
-    this.client = new DSUtils.Promise(function (resolve, reject) {
-      MongoClient.connect(opts.uri, function (err, db) {
-        return err ? reject(err) : resolve(db)
-      })
-    })
-  }
+  })
+  Object.defineProperties(target, props)
+}
 
+const fillIn = function (dest, src) {
+  DSUtils.forOwn(src, function (value, key) {
+    if (!dest.hasOwnProperty(key) || dest[key] === undefined) {
+      dest[key] = value
+    }
+  })
+}
+
+function unique (array) {
+  const seen = {}
+  const final = []
+  array.forEach(function (item) {
+    if (item in seen) {
+      return
+    }
+    final.push(item)
+    seen[item] = 0
+  })
+  return final
+}
+
+/**
+ * MongoDBAdapter class.
+ *
+ * @example
+ * import {DS} from 'js-data'
+ * import MongoDBAdapter from 'js-data-mongodb'
+ * const store = new DS()
+ * const adapter = new MongoDBAdapter({
+ *   uri: 'mongodb://localhost:27017'
+ * })
+ * store.registerAdapter('mongodb', adapter, { 'default': true })
+ *
+ * @class MongoDBAdapter
+ * @param {Object} [opts] Configuration opts.
+ * @param {string} [opts.uri=''] MongoDB URI.
+ */
+export default function MongoDBAdapter (opts) {
+  const self = this
+  if (typeof opts === 'string') {
+    opts = { uri: opts }
+  }
+  opts.uri || (opts.uri = 'mongodb://localhost:27017')
+  self.defaults = new Defaults()
+  DSUtils.deepMixIn(self.defaults, opts)
+  fillIn(self, opts)
+
+  /**
+   * A Promise that resolves to a reference to the MongoDB client being used by
+   * this adapter.
+   *
+   * @name MongoDBAdapter#client
+   * @type {Object}
+   */
+  self.client = new DSUtils.Promise(function (resolve, reject) {
+    MongoClient.connect(opts.uri, function (err, db) {
+      return err ? reject(err) : resolve(db)
+    })
+  })
+}
+
+addHiddenPropsToTarget(MongoDBAdapter.prototype, {
+  /**
+   * Return a Promise that resolves to a reference to the MongoDB client being
+   * used by this adapter.
+   *
+   * Useful when you need to do anything custom with the MongoDB client library.
+   *
+   * @name MongoDBAdapter#getClient
+   * @method
+   * @return {Object} MongoDB client.
+   */
   getClient () {
     return this.client
-  }
+  },
 
-  getQuery (resourceConfig, params) {
-    params = params || {}
-    params.where = params.where || {}
+  /**
+   * Map filtering params in a selection query to MongoDB a filtering object.
+   *
+   * Handles the following:
+   *
+   * - where
+   *   - and bunch of filtering operators
+   *
+   * @name MongoDBAdapter#getQuery
+   * @method
+   * @return {Object}
+   */
+  getQuery (Resource, query) {
+    query || (query = {})
+    query.where || (query.where = {})
 
-    DSUtils.forOwn(params, function (v, k) {
+    DSUtils.forOwn(query, function (v, k) {
       if (reserved.indexOf(k) === -1) {
         if (DSUtils.isObject(v)) {
-          params.where[k] = v
+          query.where[k] = v
         } else {
-          params.where[k] = {
+          query.where[k] = {
             '==': v
           }
         }
-        delete params[k]
+        delete query[k]
       }
     })
 
-    let query = {}
+    let mongoQuery = {}
 
-    if (Object.keys(params.where).length) {
-      DSUtils.forOwn(params.where, function (criteria, field) {
+    if (Object.keys(query.where).length) {
+      DSUtils.forOwn(query.where, function (criteria, field) {
         if (!DSUtils.isObject(criteria)) {
-          params.where[field] = {
+          query.where[field] = {
             '==': criteria
           }
         }
         DSUtils.forOwn(criteria, function (v, op) {
           if (op === '==' || op === '===') {
-            query[field] = v
+            mongoQuery[field] = v
           } else if (op === '!=' || op === '!==') {
-            query[field] = query[field] || {}
-            query[field].$ne = v
+            mongoQuery[field] = mongoQuery[field] || {}
+            mongoQuery[field].$ne = v
           } else if (op === '>') {
-            query[field] = query[field] || {}
-            query[field].$gt = v
+            mongoQuery[field] = mongoQuery[field] || {}
+            mongoQuery[field].$gt = v
           } else if (op === '>=') {
-            query[field] = query[field] || {}
-            query[field].$gte = v
+            mongoQuery[field] = mongoQuery[field] || {}
+            mongoQuery[field].$gte = v
           } else if (op === '<') {
-            query[field] = query[field] || {}
-            query[field].$lt = v
+            mongoQuery[field] = mongoQuery[field] || {}
+            mongoQuery[field].$lt = v
           } else if (op === '<=') {
-            query[field] = query[field] || {}
-            query[field].$lte = v
+            mongoQuery[field] = mongoQuery[field] || {}
+            mongoQuery[field].$lte = v
           } else if (op === 'in') {
-            query[field] = query[field] || {}
-            query[field].$in = v
+            mongoQuery[field] = mongoQuery[field] || {}
+            mongoQuery[field].$in = v
           } else if (op === 'notIn') {
-            query[field] = query[field] || {}
-            query[field].$nin = v
+            mongoQuery[field] = mongoQuery[field] || {}
+            mongoQuery[field].$nin = v
           } else if (op === '|==' || op === '|===') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orEqQuery = {}
             orEqQuery[field] = v
-            query.$or.push(orEqQuery)
+            mongoQuery.$or.push(orEqQuery)
           } else if (op === '|!=' || op === '|!==') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orNeQuery = {}
             orNeQuery[field] = {
               '$ne': v
             }
-            query.$or.push(orNeQuery)
+            mongoQuery.$or.push(orNeQuery)
           } else if (op === '|>') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orGtQuery = {}
             orGtQuery[field] = {
               '$gt': v
             }
-            query.$or.push(orGtQuery)
+            mongoQuery.$or.push(orGtQuery)
           } else if (op === '|>=') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orGteQuery = {}
             orGteQuery[field] = {
               '$gte': v
             }
-            query.$or.push(orGteQuery)
+            mongoQuery.$or.push(orGteQuery)
           } else if (op === '|<') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orLtQuery = {}
             orLtQuery[field] = {
               '$lt': v
             }
-            query.$or.push(orLtQuery)
+            mongoQuery.$or.push(orLtQuery)
           } else if (op === '|<=') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orLteQuery = {}
             orLteQuery[field] = {
               '$lte': v
             }
-            query.$or.push(orLteQuery)
+            mongoQuery.$or.push(orLteQuery)
           } else if (op === '|in') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orInQuery = {}
             orInQuery[field] = {
               '$in': v
             }
-            query.$or.push(orInQuery)
+            mongoQuery.$or.push(orInQuery)
           } else if (op === '|notIn') {
-            query.$or = query.$or || []
+            mongoQuery.$or = mongoQuery.$or || []
             let orNinQuery = {}
             orNinQuery[field] = {
               '$nin': v
             }
-            query.$or.push(orNinQuery)
+            mongoQuery.$or.push(orNinQuery)
           }
         })
       })
     }
 
-    return query
-  }
+    return mongoQuery
+  },
 
-  getQueryOptions (resourceConfig, params) {
-    params = params || {}
-    params.orderBy = params.orderBy || params.sort
-    params.skip = params.skip || params.offset
+  /**
+   * Map non-filtering params in a selection query to MongoDB query options.
+   *
+   * Handles the following:
+   *
+   * - limit
+   * - skip/offset
+   * - orderBy/sort
+   *
+   * @name MongoDBAdapter#getQueryOptions
+   * @method
+   * @return {Object}
+   */
+  getQueryOptions (Resource, query) {
+    query = query || {}
+    query.orderBy = query.orderBy || query.sort
+    query.skip = query.skip || query.offset
 
     let queryOptions = {}
 
-    if (params.orderBy) {
-      if (DSUtils.isString(params.orderBy)) {
-        params.orderBy = [
-          [params.orderBy, 'asc']
+    if (query.orderBy) {
+      if (DSUtils.isString(query.orderBy)) {
+        query.orderBy = [
+          [query.orderBy, 'asc']
         ]
       }
-      for (var i = 0; i < params.orderBy.length; i++) {
-        if (DSUtils.isString(params.orderBy[i])) {
-          params.orderBy[i] = [params.orderBy[i], 'asc']
+      for (var i = 0; i < query.orderBy.length; i++) {
+        if (DSUtils.isString(query.orderBy[i])) {
+          query.orderBy[i] = [query.orderBy[i], 'asc']
         }
       }
-      queryOptions.sort = params.orderBy
+      queryOptions.sort = query.orderBy
     }
 
-    if (params.skip) {
-      queryOptions.skip = +params.skip
+    if (query.skip) {
+      queryOptions.skip = +query.skip
     }
 
-    if (params.limit) {
-      queryOptions.limit = +params.limit
+    if (query.limit) {
+      queryOptions.limit = +query.limit
     }
 
     return queryOptions
-  }
+  },
 
-  translateId (r, options) {
-    options = options || {}
-    if (typeof options.translateId === 'boolean' ? options.translateId : this.defaults.translateId) {
-      if (Array.isArray(r)) {
-        r.forEach((_r) => {
-          let __id = _r._id ? _r._id.toString() : _r._id
+  /**
+   * TODO
+   *
+   * @name MongoDBAdapter#translateId
+   * @method
+   * @return {*}
+   */
+  translateId (r, opts) {
+    opts || (opts = {})
+    if (typeof opts.translateId === 'boolean' ? opts.translateId : this.defaults.translateId) {
+      if (DSUtils.isArray(r)) {
+        r.forEach(function (_r) {
+          const __id = _r._id ? _r._id.toString() : _r._id
           _r._id = typeof __id === 'string' ? __id : _r._id
         })
       } else if (DSUtils.isObject(r)) {
-        let __id = r._id ? r._id.toString() : r._id
+        const __id = r._id ? r._id.toString() : r._id
         r._id = typeof __id === 'string' ? __id : r._id
       }
     }
     return r
-  }
+  },
 
-  origify (options) {
-    options = options || {}
-    if (typeof options.orig === 'function') {
-      return options.orig()
+  /**
+   * TODO
+   *
+   * @name MongoDBAdapter#origify
+   * @method
+   * @return {Object}
+   */
+  origify (opts) {
+    opts = opts || {}
+    if (typeof opts.orig === 'function') {
+      return opts.orig()
     }
-    return options
-  }
+    return opts
+  },
 
-  find (resourceConfig, id, options) {
-    let instance
-    options = this.origify(options)
-    options.with = options.with || []
-    return this.getClient().then((client) => {
-      return new DSUtils.Promise((resolve, reject) => {
-        let params = {}
-        params[resourceConfig.idAttribute] = id
-        if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
-          params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id)
+  /**
+   * TODO
+   *
+   * @name MongoDBAdapter#makeHasManyForeignKey
+   * @method
+   * @return {*}
+   */
+  toObjectID (Resource, id) {
+    if (id !== undefined && Resource.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id) && !(id instanceof ObjectID)) {
+      return new ObjectID(id)
+    }
+    return id
+  },
+
+  /**
+   * TODO
+   *
+   * If the foreignKeys in your database are saved as ObjectIDs, then override
+   * this method and change it to something like:
+   *
+   * ```
+   * return this.toObjectID(Resource, this.constructor.prototype.makeHasManyForeignKey.call(this, Resource, def, record))
+   * ```
+   *
+   * There may be other reasons why you may want to override this method, like
+   * when the id of the parent doesn't exactly match up to the key on the child.
+   *
+   * @name MongoDBAdapter#makeHasManyForeignKey
+   * @method
+   * @return {*}
+   */
+  makeHasManyForeignKey (Resource, def, record) {
+    return DSUtils.get(record, Resource.idAttribute)
+  },
+
+  /**
+   * TODO
+   *
+   * @name MongoDBAdapter#loadHasMany
+   * @method
+   * @return {Promise}
+   */
+  loadHasMany (Resource, def, records, __options) {
+    const self = this
+    let singular = false
+
+    if (DSUtils.isObject(records) && !DSUtils.isArray(records)) {
+      singular = true
+      records = [records]
+    }
+    const IDs = records.map(function (record) {
+      return self.makeHasManyForeignKey(Resource, def, record)
+    })
+    const query = {}
+    const criteria = query[def.foreignKey] = {}
+    if (singular) {
+      // more efficient query when we only have one record
+      criteria['=='] = IDs[0]
+    } else {
+      criteria['in'] = IDs.filter(function (id) {
+        return id
+      })
+    }
+    return self.findAll(Resource.getResource(def.relation), query, __options).then(function (relatedItems) {
+      records.forEach(function (record) {
+        let attached = []
+        // avoid unneccesary iteration when we only have one record
+        if (singular) {
+          attached = relatedItems
+        } else {
+          relatedItems.forEach(function (relatedItem) {
+            if (DSUtils.get(relatedItem, def.foreignKey) === record[Resource.idAttribute]) {
+              attached.push(relatedItem)
+            }
+          })
         }
+        DSUtils.set(record, def.localField, attached)
+      })
+    })
+  },
+
+  /**
+   * TODO
+   *
+   * @name MongoDBAdapter#loadHasOne
+   * @method
+   * @return {Promise}
+   */
+  loadHasOne (Resource, def, records, __options) {
+    if (DSUtils.isObject(records) && !DSUtils.isArray(records)) {
+      records = [records]
+    }
+    return this.loadHasMany(Resource, def, records, __options).then(function () {
+      records.forEach(function (record) {
+        const relatedData = DSUtils.get(record, def.localField)
+        if (DSUtils.isArray(relatedData) && relatedData.length) {
+          DSUtils.set(record, def.localField, relatedData[0])
+        }
+      })
+    })
+  },
+
+  /**
+   * TODO
+   *
+   * @name MongoDBAdapter#makeBelongsToForeignKey
+   * @method
+   * @return {*}
+   */
+  makeBelongsToForeignKey (Resource, def, record) {
+    return this.toObjectID(Resource.getResource(def.relation), DSUtils.get(record, def.localKey))
+  },
+
+  /**
+   * TODO
+   *
+   * @name MongoDBAdapter#loadBelongsTo
+   * @method
+   * @return {Promise}
+   */
+  loadBelongsTo (Resource, def, records, __options) {
+    const self = this
+    const relationDef = Resource.getResource(def.relation)
+
+    if (DSUtils.isObject(records) && !DSUtils.isArray(records)) {
+      const record = records
+      return self.find(relationDef, self.makeBelongsToForeignKey(Resource, def, record), __options).then(function (relatedItem) {
+        DSUtils.set(record, def.localField, relatedItem)
+      })
+    } else {
+      const keys = records.map(function (record) {
+        return self.makeBelongsToForeignKey(Resource, def, record)
+      }).filter(function (key) {
+        return key
+      })
+      return self.findAll(relationDef, {
+        where: {
+          [relationDef.idAttribute]: {
+            'in': keys
+          }
+        }
+      }, __options).then(function (relatedItems) {
+        records.forEach(function (record) {
+          relatedItems.forEach(function (relatedItem) {
+            if (relatedItem[relationDef.idAttribute] === record[def.localKey]) {
+              DSUtils.set(record, def.localField, relatedItem)
+            }
+          })
+        })
+      })
+    }
+  },
+
+  /**
+   * Retrieve the record with the given primary key.
+   *
+   * @name MongoDBAdapter#find
+   * @method
+   * @param {Object} Resource The Resource.
+   * @param {(string|number)} id Primary key of the record to retrieve.
+   * @param {Object} [opts] Configuration options.
+   * @param {string[]} [opts.with=[]] TODO
+   * @return {Promise}
+   */
+  find (Resource, id, options) {
+    const self = this
+    let instance
+    options = self.origify(options)
+    options.with || (options.with = [])
+    return self.getClient().then(function (client) {
+      return new DSUtils.Promise(function (resolve, reject) {
+        let mongoQuery = {}
+        mongoQuery[Resource.idAttribute] = self.toObjectID(Resource, id)
         options.fields = options.fields || {}
-        client.collection(resourceConfig.table || underscore(resourceConfig.name)).findOne(params, options, (err, r) => {
+        client.collection(Resource.table || underscore(Resource.name)).findOne(mongoQuery, options, function (err, r) {
           if (err) {
             reject(err)
           } else if (!r) {
             reject(new Error('Not Found!'))
           } else {
-            resolve(this.translateId(r, options))
+            resolve(self.translateId(r, options))
           }
         })
       })
-    }).then((_instance) => {
+    }).then(function (_instance) {
       instance = _instance
       let tasks = []
+      const relationList = Resource.relationList || []
 
-      DSUtils.forEach(resourceConfig.relationList, (def) => {
+      relationList.forEach(function (def) {
         let relationName = def.relation
-        let relationDef = resourceConfig.getResource(relationName)
+        let relationDef = Resource.getResource(relationName)
         let containedName = null
-        if (DSUtils.contains(options.with, relationName)) {
+        if (options.with.indexOf(relationName) !== -1) {
           containedName = relationName
-        } else if (DSUtils.contains(options.with, def.localField)) {
+        } else if (options.with.indexOf(def.localField) !== -1) {
           containedName = def.localField
         }
         if (containedName) {
@@ -250,7 +515,7 @@ class DSMongoDBAdapter {
           __options.with = options.with.slice()
           __options = DSUtils._(relationDef, __options)
           DSUtils.remove(__options.with, containedName)
-          DSUtils.forEach(__options.with, (relation, i) => {
+          __options.with.forEach(function (relation, i) {
             if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
               __options.with[i] = relation.substr(containedName.length + 1)
             } else {
@@ -260,41 +525,29 @@ class DSMongoDBAdapter {
 
           let task
 
-          if ((def.type === 'hasOne' || def.type === 'hasMany') && def.foreignKey) {
-            task = this.findAll(resourceConfig.getResource(relationName), {
-              where: {
-                [def.foreignKey]: {
-                  '==': instance[resourceConfig.idAttribute]
-                }
-              }
-            }, __options).then((relatedItems) => {
-              if (def.type === 'hasOne' && relatedItems.length) {
-                DSUtils.set(instance, def.localField, relatedItems[0])
-              } else {
-                DSUtils.set(instance, def.localField, relatedItems)
-              }
-              return relatedItems
-            })
+          if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
+            if (def.type === 'hasOne') {
+              task = self.loadHasOne(Resource, def, instance, __options)
+            } else {
+              task = self.loadHasMany(Resource, def, instance, __options)
+            }
           } else if (def.type === 'hasMany' && def.localKeys) {
             let localKeys = []
             let itemKeys = instance[def.localKeys] || []
-            itemKeys = Array.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys)
+            itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys)
             localKeys = localKeys.concat(itemKeys || [])
-            task = this.findAll(resourceConfig.getResource(relationName), {
+            task = self.findAll(Resource.getResource(relationName), {
               where: {
                 [relationDef.idAttribute]: {
-                  'in': map(DSUtils.filter(unique(localKeys), (x) => x), (x) => new ObjectID(x))
+                  'in': unique(localKeys).filter((x) => x).map((x) => self.toObjectID(relationDef, x))
                 }
               }
-            }, __options).then((relatedItems) => {
+            }, __options).then(function (relatedItems) {
               DSUtils.set(instance, def.localField, relatedItems)
               return relatedItems
             })
           } else if (def.type === 'belongsTo' || (def.type === 'hasOne' && def.localKey)) {
-            task = this.find(resourceConfig.getResource(relationName), DSUtils.get(instance, def.localKey), __options).then((relatedItem) => {
-              DSUtils.set(instance, def.localField, relatedItem)
-              return relatedItem
-            })
+            task = self.loadBelongsTo(Resource, def, instance, __options)
           }
 
           if (task) {
@@ -304,36 +557,51 @@ class DSMongoDBAdapter {
       })
 
       return DSUtils.Promise.all(tasks)
-    }).then(() => instance)
-  }
+    }).then(function () {
+      return instance
+    })
+  },
 
-  findAll (resourceConfig, params, options) {
+  /**
+   * Retrieve the records that match the selection query.
+   *
+   * @name MongoDBAdapter#findAll
+   * @method
+   * @param {Object} Resource The Resource.
+   * @param {Object} query Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @param {string[]} [opts.with=[]] TODO
+   * @return {Promise}
+   */
+  findAll (Resource, query, options) {
+    const self = this
     let items = null
-    options = this.origify(options ? DSUtils.copy(options) : {})
+    options = self.origify(options ? DSUtils.copy(options) : {})
     options.with = options.with || []
-    DSUtils.deepMixIn(options, this.getQueryOptions(resourceConfig, params))
-    let query = this.getQuery(resourceConfig, params)
-    return this.getClient().then((client) => {
-      return new DSUtils.Promise((resolve, reject) => {
+    DSUtils.deepMixIn(options, self.getQueryOptions(Resource, query))
+    const mongoQuery = self.getQuery(Resource, query)
+    return self.getClient().then(function (client) {
+      return new DSUtils.Promise(function (resolve, reject) {
         options.fields = options.fields || {}
-        client.collection(resourceConfig.table || underscore(resourceConfig.name)).find(query, options).toArray((err, r) => {
+        client.collection(Resource.table || underscore(Resource.name)).find(mongoQuery, options).toArray((err, r) => {
           if (err) {
             reject(err)
           } else {
-            resolve(this.translateId(r, options))
+            resolve(self.translateId(r, options))
           }
         })
       })
-    }).then((_items) => {
+    }).then(function (_items) {
       items = _items
       let tasks = []
-      DSUtils.forEach(resourceConfig.relationList, (def) => {
+      const relationList = Resource.relationList || []
+      relationList.forEach(function (def) {
         let relationName = def.relation
-        let relationDef = resourceConfig.getResource(relationName)
+        let relationDef = Resource.getResource(relationName)
         let containedName = null
-        if (DSUtils.contains(options.with, relationName)) {
+        if (options.with.indexOf(relationName) !== -1) {
           containedName = relationName
-        } else if (DSUtils.contains(options.with, def.localField)) {
+        } else if (options.with.indexOf(def.localField) !== -1) {
           containedName = def.localField
         }
         if (containedName) {
@@ -341,7 +609,7 @@ class DSMongoDBAdapter {
           __options.with = options.with.slice()
           __options = DSUtils._(relationDef, __options)
           DSUtils.remove(__options.with, containedName)
-          DSUtils.forEach(__options.with, (relation, i) => {
+          __options.with.forEach(function (relation, i) {
             if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
               __options.with[i] = relation.substr(containedName.length + 1)
             } else {
@@ -351,49 +619,32 @@ class DSMongoDBAdapter {
 
           let task
 
-          if ((def.type === 'hasOne' || def.type === 'hasMany') && def.foreignKey) {
-            task = this.findAll(resourceConfig.getResource(relationName), {
-              where: {
-                [def.foreignKey]: {
-                  'in': DSUtils.filter(map(items, (item) => DSUtils.get(item, resourceConfig.idAttribute)), (x) => x)
-                }
-              }
-            }, __options).then((relatedItems) => {
-              DSUtils.forEach(items, (item) => {
-                let attached = []
-                DSUtils.forEach(relatedItems, (relatedItem) => {
-                  if (DSUtils.get(relatedItem, def.foreignKey) === item[resourceConfig.idAttribute]) {
-                    attached.push(relatedItem)
-                  }
-                })
-                if (def.type === 'hasOne' && attached.length) {
-                  DSUtils.set(item, def.localField, attached[0])
-                } else {
-                  DSUtils.set(item, def.localField, attached)
-                }
-              })
-              return relatedItems
-            })
+          if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
+            if (def.type === 'hasMany') {
+              task = self.loadHasMany(Resource, def, items, __options)
+            } else {
+              task = self.loadHasOne(Resource, def, items, __options)
+            }
           } else if (def.type === 'hasMany' && def.localKeys) {
             let localKeys = []
-            DSUtils.forEach(items, (item) => {
+            items.forEach(function (item) {
               let itemKeys = item[def.localKeys] || []
-              itemKeys = Array.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys)
+              itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : Object.keys(itemKeys)
               localKeys = localKeys.concat(itemKeys || [])
             })
-            task = this.findAll(resourceConfig.getResource(relationName), {
+            task = self.findAll(Resource.getResource(relationName), {
               where: {
                 [relationDef.idAttribute]: {
-                  'in': map(DSUtils.filter(unique(localKeys), (x) => x), (x) => new ObjectID(x))
+                  'in': unique(localKeys).filter((x) => x).map((x) => self.toObjectID(relationDef, x))
                 }
               }
-            }, __options).then((relatedItems) => {
-              DSUtils.forEach(items, (item) => {
+            }, __options).then(function (relatedItems) {
+              items.forEach(function (item) {
                 let attached = []
                 let itemKeys = item[def.localKeys] || []
-                itemKeys = Array.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys)
-                DSUtils.forEach(relatedItems, (relatedItem) => {
-                  if (itemKeys && DSUtils.contains(itemKeys, relatedItem[relationDef.idAttribute])) {
+                itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys)
+                relatedItems.forEach(function (relatedItem) {
+                  if (itemKeys && itemKeys.indexOf(relatedItem[relationDef.idAttribute]) !== -1) {
                     attached.push(relatedItem)
                   }
                 })
@@ -402,22 +653,7 @@ class DSMongoDBAdapter {
               return relatedItems
             })
           } else if (def.type === 'belongsTo' || (def.type === 'hasOne' && def.localKey)) {
-            task = this.findAll(resourceConfig.getResource(relationName), {
-              where: {
-                [relationDef.idAttribute]: {
-                  'in': map(DSUtils.filter(map(items, (item) => DSUtils.get(item, def.localKey)), (x) => x), (x) => new ObjectID(x))
-                }
-              }
-            }, __options).then((relatedItems) => {
-              DSUtils.forEach(items, (item) => {
-                DSUtils.forEach(relatedItems, (relatedItem) => {
-                  if (relatedItem[relationDef.idAttribute] === item[def.localKey]) {
-                    DSUtils.set(item, def.localField, relatedItem)
-                  }
-                })
-              })
-              return relatedItems
-            })
+            task = self.loadBelongsTo(Resource, def, items, __options)
           }
 
           if (task) {
@@ -426,43 +662,63 @@ class DSMongoDBAdapter {
         }
       })
       return DSUtils.Promise.all(tasks)
-    }).then(() => items)
-  }
+    }).then(function () {
+      return items
+    })
+  },
 
-  create (resourceConfig, attrs, options) {
-    options = this.origify(options)
-    attrs = DSUtils.removeCircular(DSUtils.omit(attrs, resourceConfig.relationFields || []))
-    return this.getClient().then((client) => {
-      return new DSUtils.Promise((resolve, reject) => {
-        let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name))
-        let method = collection.insertOne ? DSUtils.isArray(attrs) ? 'insertMany' : 'insertOne' : 'insert'
-        collection[method](attrs, options, (err, r) => {
+  /**
+   * Create a new record.
+   *
+   * @name MongoDBAdapter#create
+   * @method
+   * @param {Object} Resource The Resource.
+   * @param {Object} props The record to be created.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  create (Resource, props, opts) {
+    const self = this
+    props = DSUtils.removeCircular(DSUtils.omit(props, Resource.relationFields || []))
+    opts = self.origify(opts)
+
+    return self.getClient().then(function (client) {
+      return new DSUtils.Promise(function (resolve, reject) {
+        const collection = client.collection(Resource.table || underscore(Resource.name))
+        const method = collection.insertOne ? DSUtils.isArray(props) ? 'insertMany' : 'insertOne' : 'insert'
+        collection[method](props, opts, function (err, r) {
           if (err) {
             reject(err)
           } else {
             r = r.ops ? r.ops : r
-            this.translateId(r, options)
-            resolve(DSUtils.isArray(attrs) ? r : r[0])
+            self.translateId(r, opts)
+            resolve(DSUtils.isArray(props) ? r : r[0])
           }
         })
       })
     })
-  }
+  },
 
-  update (resourceConfig, id, attrs, options) {
-    attrs = DSUtils.removeCircular(DSUtils.omit(attrs, resourceConfig.relationFields || []))
-    options = this.origify(options)
-    return this.find(resourceConfig, id, options).then(() => {
-      return this.getClient()
-    }).then((client) => {
-      return new DSUtils.Promise((resolve, reject) => {
-        let params = {}
-        params[resourceConfig.idAttribute] = id
-        if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
-          params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id)
-        }
-        let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name))
-        collection[collection.updateOne ? 'updateOne' : 'update'](params, {$set: attrs}, options, (err) => {
+  /**
+   * Destroy the record with the given primary key.
+   *
+   * @name MongoDBAdapter#destroy
+   * @method
+   * @param {Object} Resource The Resource.
+   * @param {(string|number)} id Primary key of the record to destroy.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  destroy (Resource, id, opts) {
+    const self = this
+    opts = self.origify(opts)
+
+    return self.getClient().then(function (client) {
+      return new DSUtils.Promise(function (resolve, reject) {
+        const mongoQuery = {}
+        mongoQuery[Resource.idAttribute] = self.toObjectID(Resource, id)
+        const collection = client.collection(Resource.table || underscore(Resource.name))
+        collection[collection.deleteOne ? 'deleteOne' : 'remove'](mongoQuery, opts, function (err) {
           if (err) {
             reject(err)
           } else {
@@ -470,30 +726,107 @@ class DSMongoDBAdapter {
           }
         })
       })
-    }).then(() => this.find(resourceConfig, id, options))
-  }
+    })
+  },
 
-  updateAll (resourceConfig, attrs, params, options) {
-    let ids = []
-    attrs = DSUtils.removeCircular(DSUtils.omit(attrs, resourceConfig.relationFields || []))
-    options = this.origify(options ? DSUtils.copy(options) : {})
-    let _options = DSUtils.copy(options)
-    _options.multi = true
-    return this.getClient().then((client) => {
-      let queryOptions = this.getQueryOptions(resourceConfig, params)
-      queryOptions.$set = attrs
-      let query = this.getQuery(resourceConfig, params)
-      return this.findAll(resourceConfig, params, options).then((items) => {
-        ids = map(items, (item) => {
-          let id = item[resourceConfig.idAttribute]
-          if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
-            return ObjectID.createFromHexString(id)
+  /**
+   * Destroy the records that match the selection query.
+   *
+   * @name MongoDBAdapter#destroyAll
+   * @method
+   * @param {Object} Resource the Resource.
+   * @param {Object} [query] Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  destroyAll (Resource, query, opts) {
+    const self = this
+    opts = self.origify(opts ? DSUtils.copy(opts) : {})
+
+    return self.getClient().then(function (client) {
+      DSUtils.deepMixIn(opts, self.getQueryOptions(Resource, query))
+      const mongoQuery = self.getQuery(Resource, query)
+      return new DSUtils.Promise(function (resolve, reject) {
+        const collection = client.collection(Resource.table || underscore(Resource.name))
+        collection[collection.deleteMany ? 'deleteMany' : 'remove'](mongoQuery, opts, function (err) {
+          if (err) {
+            reject(err)
+          } else {
+            resolve()
           }
-          return id
         })
-        return new DSUtils.Promise((resolve, reject) => {
-          let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name))
-          collection[collection.updateMany ? 'updateMany' : 'update'](query, queryOptions, _options, (err) => {
+      })
+    })
+  },
+
+  /**
+   * Apply the given update to the record with the specified primary key.
+   *
+   * @name MongoDBAdapter#update
+   * @method
+   * @param {Object} Resource The Resource.
+   * @param {(string|number)} id The primary key of the record to be updated.
+   * @param {Object} props The update to apply to the record.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  update (Resource, id, props, opts) {
+    const self = this
+    props = DSUtils.removeCircular(DSUtils.omit(props, Resource.relationFields || []))
+    opts = self.origify(opts)
+
+    return self.find(Resource, id, opts).then(function () {
+      return self.getClient()
+    }).then(function (client) {
+      return new DSUtils.Promise(function (resolve, reject) {
+        const mongoQuery = {}
+        mongoQuery[Resource.idAttribute] = self.toObjectID(Resource, id)
+        const collection = client.collection(Resource.table || underscore(Resource.name))
+        collection[collection.updateOne ? 'updateOne' : 'update'](mongoQuery, { $set: props }, opts, function (err) {
+          if (err) {
+            reject(err)
+          } else {
+            resolve()
+          }
+        })
+      })
+    }).then(function () {
+      return self.find(Resource, id, opts)
+    })
+  },
+
+  /**
+   * Apply the given update to all records that match the selection query.
+   *
+   * @name MongoDBAdapter#updateAll
+   * @method
+   * @param {Object} Resource The Resource.
+   * @param {Object} props The update to apply to the selected records.
+   * @param {Object} [query] Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  updateAll (Resource, props, query, opts) {
+    const self = this
+    let ids = []
+    props = DSUtils.removeCircular(DSUtils.omit(props, Resource.relationFields || []))
+    opts = self.origify(opts ? DSUtils.copy(opts) : {})
+    const mongoOptions = DSUtils.copy(opts)
+    mongoOptions.multi = true
+
+    return self.getClient().then(function (client) {
+      const queryOptions = self.getQueryOptions(Resource, query)
+      queryOptions.$set = props
+      const mongoQuery = self.getQuery(Resource, query)
+
+      return self.findAll(Resource, query, opts).then(function (items) {
+        ids = items.map(function (item) {
+          return self.toObjectID(Resource, item[Resource.idAttribute])
+        })
+
+        return new DSUtils.Promise(function (resolve, reject) {
+          const collection = client.collection(Resource.table || underscore(Resource.name))
+          collection[collection.updateMany ? 'updateMany' : 'update'](mongoQuery, queryOptions, mongoOptions, function (err) {
             if (err) {
               reject(err)
             } else {
@@ -501,54 +834,13 @@ class DSMongoDBAdapter {
             }
           })
         })
-      }).then(() => {
-        let _params = {}
-        _params[resourceConfig.idAttribute] = {
+      }).then(function () {
+        const query = {}
+        query[Resource.idAttribute] = {
           'in': ids
         }
-        return this.findAll(resourceConfig, _params, options)
+        return self.findAll(Resource, query, opts)
       })
     })
   }
-
-  destroy (resourceConfig, id, options) {
-    options = this.origify(options)
-    return this.getClient().then((client) => {
-      return new DSUtils.Promise((resolve, reject) => {
-        let params = {}
-        params[resourceConfig.idAttribute] = id
-        if (resourceConfig.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id)) {
-          params[resourceConfig.idAttribute] = ObjectID.createFromHexString(id)
-        }
-        let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name))
-        collection[collection.deleteOne ? 'deleteOne' : 'remove'](params, options, (err) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve()
-          }
-        })
-      })
-    })
-  }
-
-  destroyAll (resourceConfig, params, options) {
-    options = this.origify(options ? DSUtils.copy(options) : {})
-    return this.getClient().then((client) => {
-      DSUtils.deepMixIn(options, this.getQueryOptions(resourceConfig, params))
-      let query = this.getQuery(resourceConfig, params)
-      return new DSUtils.Promise((resolve, reject) => {
-        let collection = client.collection(resourceConfig.table || underscore(resourceConfig.name))
-        collection[collection.deleteMany ? 'deleteMany' : 'remove'](query, options, (err) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve()
-          }
-        })
-      })
-    })
-  }
-}
-
-module.exports = DSMongoDBAdapter
+})

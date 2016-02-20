@@ -34,5 +34,7 @@ data/
 doc/
 test/
 .babelrc
-webpack.config.js
+mocha.start.js
+rollup.config.js
 circle.yml
+conf.json
