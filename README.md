@@ -14,67 +14,77 @@ MongoDB adapter for [js-data](http://www.js-data.io/).
 ## Table of contents
 
 * [Quick start](#quick-start)
-* [Documentation](#documentation)
-* [API Reference](#api-reference)
-* [Support](#support)
+* [Guides and Tutorials](#guides-and-tutorials)
+* [API Reference Docs](#api-reference-docs)
 * [Community](#community)
+* [Support](#support)
 * [Contributing](#contributing)
 * [License](#license)
 
 ## Quick Start
-`npm install --save js-data js-data-mongodb`.
+`npm install --save js-data js-data-mongodb mongodb bson`.
 
 ```js
-var JSData = require('js-data');
-var DSMongoDBAdapter = require('js-data-mongodb');
+// Use Container instead of DataStore on the server
+import {Container} from 'js-data'
+import MongoDBAdapter from 'js-data-mongodb'
 
-var store = new JSData.DS();
-var adapter = new DSMongoDBAdapter('mongodb://localhost:27017');
+// Create a store to hold your Mappers
+const store = new Container({
+  mapperDefaults: {
+    // MongoDB uses "_id" as the primary key
+    idAttribute: '_id'
+  }
+})
 
-// "store" will now use the MongoDB adapter for all async operations
-store.registerAdapter('mongodb', adapter, { default: true });
+// Create an instance of MongoDBAdapter with default settings
+const adapter = new MongoDBAdapter()
 
-var User = store.defineResource({
-  // Why couldn't Mongo just use "id"?
-  idAttribute: '_id',
+// Mappers in "store" will use the MongoDB adapter by default
+store.registerAdapter('mongodb', adapter, { default: true })
 
-  // map this resource to a collection, default is Resource#name
-  table: 'users'
-});
+// Create a Mapper that maps to a "user" collection
+store.defineMapper('user')
 ```
 
-### Documentation
-- [Getting Started with js-data](http://www.js-data.io/docs/home)
-- [js-data-mongodb](http://www.js-data.io/docs/js-data-mongodb)
-- [CHANGELOG.md](https://github.com/js-data/js-data-mongodb/blob/master/CHANGELOG.md)
+```js
+async function findAllAdminUsers () {
+  // Find all users where "user.role" == "admin"
+  return await store.findAll('user', {
+    role: 'admin'
+  })
+}
+```
 
-## API Reference
-- [js-data-mongodb](http://api.js-data.io/js-data-mongodb/)
+## Guides and Tutorials
+
+[Get started at http://js-data.io](http://js-data.io)
+
+## API Reference Docs
+
+[Visit http://api.js-data.io](http://api.js-data.io).
+
+## Community
+
+[Explore the Community](http://js-data.io/docs/community).
 
 ## Support
 
-Support questions are handled via [StackOverflow][so], [Slack][sl_l], and the
-[Mailing List][ml]. Ask your questions there.
-
-When submitting bug reports on GitHub, please include as much detail as possible
-to make debugging quick and easy.
-
-## Community
-- [StackOverflow Channel][so]
-- [Slack Chat][sl_l] [![Slack Status][sl_b]][sl_l]
-- [Announcements](http://www.js-data.io/blog)
-- [Mailing List](ml)
-- [Issue Tracker](https://github.com/js-data/js-data-mongodb/issues)
+[Find out how to Get Support](http://js-data.io/docs/support).
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/js-data/js-data-mongodb/blob/master/CONTRIBUTING.md).
+[Read the Contributing Guide](http://js-data.io/docs/contributing).
 
 ## License
 
 The MIT License (MIT)
 
-See [LICENSE](https://github.com/js-data/js-data-mongodb/blob/master/LICENSE).
+Copyright (c) 2014-2016 js-data-mongodb project authors
+
+* [LICENSE](https://github.com/js-data/js-data-mongodb/blob/master/LICENSE)
+* [AUTHORS](https://github.com/js-data/js-data-mongodb/blob/master/AUTHORS)
+* [CONTRIBUTORS](https://github.com/js-data/js-data-mongodb/blob/master/CONTRIBUTORS)
 
 [sl_b]: http://slack.js-data.io/badge.svg
 [sl_l]: http://slack.js-data.io
@@ -88,6 +98,3 @@ See [LICENSE](https://github.com/js-data/js-data-mongodb/blob/master/LICENSE).
 [cov_l]: https://coveralls.io/github/js-data/js-data-mongodb?branch=master
 [cod_b]: https://img.shields.io/codacy/1f45ede49dfb4bdea68f46ca55631968.svg
 [cod_l]: https://www.codacy.com/app/jasondobry/js-data-mongodb/dashboard
-
-[ml]: https://groups.io/org/groupsio/jsdata
-[so]: http://stackoverflow.com/questions/tagged/jsdata

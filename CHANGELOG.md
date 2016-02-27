@@ -1,3 +1,13 @@
+##### 1.0.0-alpha.1 - 26 February 2016
+
+###### Breaking API changes
+- Now depends on js-data 3.x
+
+###### Backwards compatible API changes
+- Added createMany and updateMany methods
+- Added lifecycle methods
+- Added insertOpts, insertManyOpts, updateOpts, removeOpts, findOpts, and findOneOpts options
+
 ##### 0.7.0 - 19 February 2016
 
 ###### Backwards compatible API changes

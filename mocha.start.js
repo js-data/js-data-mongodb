@@ -11,28 +11,34 @@ var MongoDBAdapter = require('./')
 
 TestRunner.init({
   debug: false,
-  DS: JSData.DS,
+  JSData: JSData,
   Adapter: MongoDBAdapter,
   adapterConfig: {
     uri: 'mongodb://localhost:27017'
   },
-  storeConfig: {
-    bypassCache: true,
-    linkRelations: false,
-    cacheResponse: false,
-    idAttribute: '_id',
-    log: false,
-    debug: false
+  containerConfig: {
+    mapperDefaults: {
+      idAttribute: '_id'
+    }
   },
-  features: [],
+  storeConfig: {
+    mapperDefaults: {
+      idAttribute: '_id'
+    }
+  },
   methods: [
     'create',
+    'createMany',
     'destroy',
     'destroyAll',
     'find',
     'findAll',
     'update',
     'updateAll'
+  ],
+  features: [
+    'findHasManyLocalKeys',
+    'findHasManyForeignKeys'
   ]
 })
 
