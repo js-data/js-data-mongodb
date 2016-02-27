@@ -14,7 +14,7 @@
   "templates": {
     "theme": "lumen",
     "systemName": "js-data-mongodb",
-    "copyright": "js-data-mongodb Copyright © 2014-2016 Jason Dobry",
+    "copyright": "js-data-mongodb Copyright © 2014-2016 js-data-mongodb project authors",
     "outputSourceFiles": true,
     "syntaxTheme": "dark",
     "linenums": true,
