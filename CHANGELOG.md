@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.2 - 27 February 2016
+
+###### Backwards compatible bug fixes
+- Fixed use of options
+
 ##### 1.0.0-alpha.1 - 26 February 2016
 
 ###### Breaking API changes

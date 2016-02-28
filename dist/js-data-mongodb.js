@@ -40,6 +40,7 @@ var isArray = jsData.utils.isArray;
 var isObject = jsData.utils.isObject;
 var isString = jsData.utils.isString;
 var isUndefined = jsData.utils.isUndefined;
+var plainCopy = jsData.utils.plainCopy;
 var resolve = jsData.utils.resolve;
 
 
@@ -425,20 +426,20 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @method
    * @return {Object}
    */
-  getQuery: function getQuery(Resource, query) {
-    query || (query = {});
+  getQuery: function getQuery(mapper, query) {
+    query = plainCopy(query || {});
     query.where || (query.where = {});
 
-    forOwn(query, function (v, k) {
-      if (reserved.indexOf(k) === -1) {
-        if (isObject(v)) {
-          query.where[k] = v;
+    forOwn(query, function (config, keyword) {
+      if (reserved.indexOf(keyword) === -1) {
+        if (isObject(config)) {
+          query.where[keyword] = config;
         } else {
-          query.where[k] = {
-            '==': v
+          query.where[keyword] = {
+            '==': config
           };
         }
-        delete query[k];
+        delete query[keyword];
       }
     });
 
@@ -582,8 +583,8 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @method
    * @return {Object}
    */
-  getQueryOptions: function getQueryOptions(Resource, query) {
-    query = query || {};
+  getQueryOptions: function getQueryOptions(mapper, query) {
+    query = plainCopy(query || {});
     query.orderBy = query.orderBy || query.sort;
     query.skip = query.skip || query.offset;
 
@@ -625,7 +626,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   getOpt: function getOpt(opt, opts) {
     opts || (opts = {});
-    return isUndefined(opts[opt]) ? this[opt] : opts[opt];
+    return isUndefined(opts[opt]) ? plainCopy(this[opt]) : plainCopy(opts[opt]);
   },
 
 
@@ -636,8 +637,8 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @method
    * @return {*}
    */
-  toObjectID: function toObjectID(Resource, id) {
-    if (id !== undefined && Resource.idAttribute === '_id' && typeof id === 'string' && bson.ObjectID.isValid(id) && !(id instanceof bson.ObjectID)) {
+  toObjectID: function toObjectID(mapper, id) {
+    if (id !== undefined && mapper.idAttribute === '_id' && typeof id === 'string' && bson.ObjectID.isValid(id) && !(id instanceof bson.ObjectID)) {
       return new bson.ObjectID(id);
     }
     return id;
@@ -1130,7 +1131,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @name MongoDBAdapter#destroy
    * @method
-   * @param {Object} Resource The Resource.
+   * @param {Object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to destroy.
    * @param {Object} [opts] Configuration options.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed

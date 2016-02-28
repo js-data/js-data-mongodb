@@ -13,6 +13,7 @@ const {
   isObject,
   isString,
   isUndefined,
+  plainCopy,
   resolve
 } = utils
 
@@ -387,20 +388,20 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @method
    * @return {Object}
    */
-  getQuery (Resource, query) {
-    query || (query = {})
+  getQuery (mapper, query) {
+    query = plainCopy(query || {})
     query.where || (query.where = {})
 
-    forOwn(query, function (v, k) {
-      if (reserved.indexOf(k) === -1) {
-        if (isObject(v)) {
-          query.where[k] = v
+    forOwn(query, function (config, keyword) {
+      if (reserved.indexOf(keyword) === -1) {
+        if (isObject(config)) {
+          query.where[keyword] = config
         } else {
-          query.where[k] = {
-            '==': v
+          query.where[keyword] = {
+            '==': config
           }
         }
-        delete query[k]
+        delete query[keyword]
       }
     })
 
@@ -534,8 +535,8 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @method
    * @return {Object}
    */
-  getQueryOptions (Resource, query) {
-    query = query || {}
+  getQueryOptions (mapper, query) {
+    query = plainCopy(query || {})
     query.orderBy = query.orderBy || query.sort
     query.skip = query.skip || query.offset
 
@@ -578,7 +579,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   getOpt (opt, opts) {
     opts || (opts = {})
-    return isUndefined(opts[opt]) ? this[opt] : opts[opt]
+    return isUndefined(opts[opt]) ? plainCopy(this[opt]) : plainCopy(opts[opt])
   },
 
   /**
@@ -588,8 +589,8 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @method
    * @return {*}
    */
-  toObjectID (Resource, id) {
-    if (id !== undefined && Resource.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id) && !(id instanceof ObjectID)) {
+  toObjectID (mapper, id) {
+    if (id !== undefined && mapper.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id) && !(id instanceof ObjectID)) {
       return new ObjectID(id)
     }
     return id
@@ -1062,7 +1063,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @name MongoDBAdapter#destroy
    * @method
-   * @param {Object} Resource The Resource.
+   * @param {Object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to destroy.
    * @param {Object} [opts] Configuration options.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
