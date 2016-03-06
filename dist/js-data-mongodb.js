@@ -5,14 +5,12 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var mongodb = require('mongodb');
 var bson = require('bson');
 var jsData = require('js-data');
+var Adapter = require('js-data-adapter');
+var Adapter__default = _interopDefault(Adapter);
 var underscore = _interopDefault(require('mout/string/underscore'));
+var unique = _interopDefault(require('mout/array/unique'));
 
 var babelHelpers = {};
-babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-};
 
 babelHelpers.defineProperty = function (obj, key, value) {
   if (key in obj) {
@@ -32,6 +30,8 @@ babelHelpers.defineProperty = function (obj, key, value) {
 babelHelpers;
 
 var addHiddenPropsToTarget = jsData.utils.addHiddenPropsToTarget;
+var classCallCheck = jsData.utils.classCallCheck;
+var extend = jsData.utils.extend;
 var fillIn = jsData.utils.fillIn;
 var forEachRelation = jsData.utils.forEachRelation;
 var forOwn = jsData.utils.forOwn;
@@ -40,68 +40,16 @@ var isArray = jsData.utils.isArray;
 var isObject = jsData.utils.isObject;
 var isString = jsData.utils.isString;
 var isUndefined = jsData.utils.isUndefined;
+var omit = jsData.utils.omit;
 var plainCopy = jsData.utils.plainCopy;
 var resolve = jsData.utils.resolve;
 
 
-var reserved = ['orderBy', 'sort', 'limit', 'offset', 'skip', 'where'];
-
-function unique(array) {
-  var seen = {};
-  var final = [];
-  array.forEach(function (item) {
-    if (item in seen) {
-      return;
-    }
-    final.push(item);
-    seen[item] = 0;
-  });
-  return final;
-}
-
-var noop = function noop() {
-  var self = this;
-
-  for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-    args[_key] = arguments[_key];
-  }
-
-  var opts = args[args.length - 1];
-  self.dbg.apply(self, [opts.op].concat(args));
-  return resolve();
-};
-
-var noop2 = function noop2() {
-  var self = this;
-
-  for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-    args[_key2] = arguments[_key2];
-  }
-
-  var opts = args[args.length - 2];
-  self.dbg.apply(self, [opts.op].concat(args));
-  return resolve();
+var withoutRelations = function withoutRelations(mapper, props) {
+  return omit(props, mapper.relationFields || []);
 };
 
 var DEFAULTS = {
-  /**
-   * Whether to log debugging information.
-   *
-   * @name MongoDBAdapter#debug
-   * @type {boolean}
-   * @default false
-   */
-  debug: false,
-
-  /**
-   * Whether to return detailed result objects instead of just record data.
-   *
-   * @name MongoDBAdapter#raw
-   * @type {boolean}
-   * @default false
-   */
-  raw: false,
-
   /**
    * Convert ObjectIDs to strings when pulling records out of the database.
    *
@@ -171,12 +119,13 @@ var REMOVE_OPTS_DEFAULTS = {};
  */
 function MongoDBAdapter(opts) {
   var self = this;
+  classCallCheck(self, MongoDBAdapter);
   opts || (opts = {});
   if (isString(opts)) {
     opts = { uri: opts };
   }
   fillIn(opts, DEFAULTS);
-  fillIn(self, opts);
+  Adapter__default.call(self, opts);
 
   /**
    * Default options to pass to collection#find.
@@ -252,6 +201,34 @@ function MongoDBAdapter(opts) {
   });
 }
 
+// Setup prototype inheritance from Adapter
+MongoDBAdapter.prototype = Object.create(Adapter__default.prototype, {
+  constructor: {
+    value: MongoDBAdapter,
+    enumerable: false,
+    writable: true,
+    configurable: true
+  }
+});
+
+Object.defineProperty(MongoDBAdapter, '__super__', {
+  configurable: true,
+  value: Adapter__default
+});
+
+/**
+ * Alternative to ES6 class syntax for extending `MongoDBAdapter`.
+ *
+ * @name MongoDBAdapter.extend
+ * @method
+ * @param {Object} [instanceProps] Properties that will be added to the
+ * prototype of the MongoDBAdapter.
+ * @param {Object} [classProps] Properties that will be added as static
+ * properties to the MongoDBAdapter itself.
+ * @return {Object} MongoDBAdapter of `MongoDBAdapter`.
+ */
+MongoDBAdapter.extend = extend;
+
 addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Translate ObjectIDs to strings.
@@ -275,127 +252,6 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       }
     }
     return r;
-  },
-
-
-  /**
-   * @name MongoDBAdapter#afterCreate
-   * @method
-   */
-  afterCreate: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterCreateMany
-   * @method
-   */
-  afterCreateMany: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterDestroy
-   * @method
-   */
-  afterDestroy: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterDestroyAll
-   * @method
-   */
-  afterDestroyAll: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterFind
-   * @method
-   */
-  afterFind: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterFindAll
-   * @method
-   */
-  afterFindAll: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterUpdate
-   * @method
-   */
-  afterUpdate: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterUpdateAll
-   * @method
-   */
-  afterUpdateAll: noop2,
-
-  /**
-   * @name MongoDBAdapter#afterUpdateMany
-   * @method
-   */
-  afterUpdateMany: noop2,
-
-  /**
-   * @name MongoDBAdapter#beforeCreate
-   * @method
-   */
-  beforeCreate: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeCreateMany
-   * @method
-   */
-  beforeCreateMany: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeDestroy
-   * @method
-   */
-  beforeDestroy: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeDestroyAll
-   * @method
-   */
-  beforeDestroyAll: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeFind
-   * @method
-   */
-  beforeFind: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeFindAll
-   * @method
-   */
-  beforeFindAll: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeUpdate
-   * @method
-   */
-  beforeUpdate: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeUpdateAll
-   * @method
-   */
-  beforeUpdateAll: noop,
-
-  /**
-   * @name MongoDBAdapter#beforeUpdateMany
-   * @method
-   */
-  beforeUpdateMany: noop,
-
-  /**
-   * @name MongoDBAdapter#dbg
-   * @method
-   */
-  dbg: function dbg() {
-    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-      args[_key3] = arguments[_key3];
-    }
-
-    this.log.apply(this, ['debug'].concat(args));
   },
 
 
@@ -431,7 +287,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     query.where || (query.where = {});
 
     forOwn(query, function (config, keyword) {
-      if (reserved.indexOf(keyword) === -1) {
+      if (Adapter.reserved.indexOf(keyword) === -1) {
         if (isObject(config)) {
           query.where[keyword] = config;
         } else {
@@ -540,37 +396,6 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
 
 
   /**
-   * Logging utility method.
-   *
-   * @name MongoDBAdapter#log
-   * @method
-   */
-  log: function log(level) {
-    for (var _len4 = arguments.length, args = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
-      args[_key4 - 1] = arguments[_key4];
-    }
-
-    if (level && !args.length) {
-      args.push(level);
-      level = 'debug';
-    }
-    if (level === 'debug' && !this.debug) {
-      return;
-    }
-    var prefix = level.toUpperCase() + ': (MongoDBAdapter)';
-    if (console[level]) {
-      var _console;
-
-      (_console = console)[level].apply(_console, [prefix].concat(args));
-    } else {
-      var _console2;
-
-      (_console2 = console).log.apply(_console2, [prefix].concat(args));
-    }
-  },
-
-
-  /**
    * Map non-filtering params in a selection query to MongoDB query options.
    *
    * Handles the following:
@@ -615,22 +440,6 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
 
 
   /**
-   * Resolve the value of the specified option based on the given options and
-   * this adapter's settings.
-   *
-   * @name MongoDBAdapter#getOpt
-   * @method
-   * @param {string} opt The name of the option.
-   * @param {Object} [opts] Configuration options.
-   * @return {*} The value of the specified option.
-   */
-  getOpt: function getOpt(opt, opts) {
-    opts || (opts = {});
-    return isUndefined(opts[opt]) ? plainCopy(this[opt]) : plainCopy(opts[opt]);
-  },
-
-
-  /**
    * Turn an _id into an ObjectID if it isn't already an ObjectID.
    *
    * @name MongoDBAdapter#toObjectID
@@ -648,160 +457,12 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Return the foreignKey from the given record for the provided relationship.
    *
-   * If the foreignKeys in your database are saved as ObjectIDs, then override
-   * this method and change it to something like:
-   *
-   * ```
-   * return this.toObjectID(mapper, this.constructor.prototype.makeHasManyForeignKey.call(this, mapper, def, record))
-   * ```
-   *
-   * There may be other reasons why you may want to override this method, like
-   * when the id of the parent doesn't exactly match up to the key on the child.
-   *
-   * @name MongoDBAdapter#makeHasManyForeignKey
-   * @method
-   * @return {*}
-   */
-  makeHasManyForeignKey: function makeHasManyForeignKey(mapper, def, record) {
-    return def.getForeignKey(record);
-  },
-
-
-  /**
-   * Return the foreignKeys from the given record for the provided relationship.
-   *
-   * @name MongoDBAdapter#makeHasManyForeignKeys
-   * @method
-   * @return {*}
-   */
-  makeHasManyForeignKeys: function makeHasManyForeignKeys(mapper, def, record) {
-    return get(record, mapper.idAttribute);
-  },
-
-
-  /**
-   * Load a hasMany relationship.
-   *
-   * @name MongoDBAdapter#loadHasMany
-   * @method
-   * @return {Promise}
-   */
-  loadHasMany: function loadHasMany(mapper, def, records, __opts) {
-    var self = this;
-    var singular = false;
-
-    if (isObject(records) && !isArray(records)) {
-      singular = true;
-      records = [records];
-    }
-    var IDs = records.map(function (record) {
-      return self.makeHasManyForeignKey(mapper, def, record);
-    });
-    var query = {};
-    var criteria = query[def.foreignKey] = {};
-    if (singular) {
-      // more efficient query when we only have one record
-      criteria['=='] = IDs[0];
-    } else {
-      criteria['in'] = IDs.filter(function (id) {
-        return id;
-      });
-    }
-    return self.findAll(def.getRelation(), query, __opts).then(function (relatedItems) {
-      records.forEach(function (record) {
-        var attached = [];
-        // avoid unneccesary iteration when we only have one record
-        if (singular) {
-          attached = relatedItems;
-        } else {
-          relatedItems.forEach(function (relatedItem) {
-            if (get(relatedItem, def.foreignKey) === record[mapper.idAttribute]) {
-              attached.push(relatedItem);
-            }
-          });
-        }
-        def.setLocalField(record, attached);
-      });
-    });
-  },
-
-
-  /**
-   * Load a hasOne relationship.
-   *
-   * @name MongoDBAdapter#loadHasOne
-   * @method
-   * @return {Promise}
-   */
-  loadHasOne: function loadHasOne(mapper, def, records, __opts) {
-    if (isObject(records) && !isArray(records)) {
-      records = [records];
-    }
-    return this.loadHasMany(mapper, def, records, __opts).then(function () {
-      records.forEach(function (record) {
-        var relatedData = def.getLocalField(record);
-        if (isArray(relatedData) && relatedData.length) {
-          def.setLocalField(record, relatedData[0]);
-        }
-      });
-    });
-  },
-
-
-  /**
-   * Return the foreignKey from the given record for the provided relationship.
-   *
    * @name MongoDBAdapter#makeBelongsToForeignKey
    * @method
    * @return {*}
    */
   makeBelongsToForeignKey: function makeBelongsToForeignKey(mapper, def, record) {
-    return this.toObjectID(def.getRelation(), def.getForeignKey(record));
-  },
-
-
-  /**
-   * Load a belongsTo relationship.
-   *
-   * @name MongoDBAdapter#loadBelongsTo
-   * @method
-   * @return {Promise}
-   */
-  loadBelongsTo: function loadBelongsTo(mapper, def, records, __opts) {
-    var self = this;
-    var relationDef = def.getRelation();
-
-    if (isObject(records) && !isArray(records)) {
-      var _ret = function () {
-        var record = records;
-        return {
-          v: self.find(relationDef, self.makeBelongsToForeignKey(mapper, def, record), __opts).then(function (relatedItem) {
-            def.setLocalField(record, relatedItem);
-          })
-        };
-      }();
-
-      if ((typeof _ret === 'undefined' ? 'undefined' : babelHelpers.typeof(_ret)) === "object") return _ret.v;
-    } else {
-      var keys = records.map(function (record) {
-        return self.makeBelongsToForeignKey(mapper, def, record);
-      }).filter(function (key) {
-        return key;
-      });
-      return self.findAll(relationDef, {
-        where: babelHelpers.defineProperty({}, relationDef.idAttribute, {
-          'in': keys
-        })
-      }, __opts).then(function (relatedItems) {
-        records.forEach(function (record) {
-          relatedItems.forEach(function (relatedItem) {
-            if (relatedItem[relationDef.idAttribute] === record[def.foreignKey]) {
-              def.setLocalField(record, relatedItem);
-            }
-          });
-        });
-      });
-    }
+    return this.toObjectID(def.getRelation(), Adapter__default.prototype.makeBelongsToForeignKey.call(this, mapper, def, record));
   },
 
 
@@ -821,8 +482,8 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   find: function find(mapper, id, opts) {
     var self = this;
-    var record = undefined,
-        op = undefined;
+    var record = void 0,
+        op = void 0;
     opts || (opts = {});
     opts.with || (opts.with = []);
 
@@ -851,7 +512,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
 
       forEachRelation(mapper, opts, function (def, __opts) {
         var relatedMapper = def.getRelation();
-        var task = undefined;
+        var task = void 0;
 
         if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
           if (def.type === 'hasOne') {
@@ -893,15 +554,15 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
 
       return Promise.all(tasks);
     }).then(function () {
+      var response = new Adapter.Response(record, {}, 'find');
+      response.found = record ? 1 : 0;
+      response = self.respond(response, opts);
+
       // afterFind lifecycle hook
       op = opts.op = 'afterFind';
-      return resolve(self[op](mapper, id, opts, record)).then(function (_record) {
+      return resolve(self[op](mapper, id, opts, response)).then(function (_response) {
         // Allow for re-assignment from lifecycle hook
-        record = isUndefined(_record) ? record : _record;
-        return self.getOpt('raw', opts) ? {
-          data: record,
-          found: record ? 1 : 0
-        } : record;
+        return isUndefined(_response) ? response : _response;
       });
     });
   },
@@ -927,7 +588,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     opts.with || (opts.with = []);
 
     var records = [];
-    var op = undefined;
+    var op = void 0;
     var findOpts = self.getOpt('findOpts', opts);
     fillIn(findOpts, self.getQueryOptions(mapper, query));
     findOpts.fields || (findOpts.fields = {});
@@ -949,7 +610,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       var tasks = [];
       forEachRelation(mapper, opts, function (def, __opts) {
         var relatedMapper = def.getRelation();
-        var task = undefined;
+        var task = void 0;
         if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
           if (def.type === 'hasMany') {
             task = self.loadHasMany(mapper, def, records, __opts);
@@ -998,15 +659,16 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       });
       return Promise.all(tasks);
     }).then(function () {
+      records || (records = []);
+      var response = new Adapter.Response(records, {}, 'findAll');
+      response.found = records.length;
+      response = self.respond(response, opts);
+
       // afterFindAll lifecycle hook
       op = opts.op = 'afterFindAll';
-      return resolve(self[op](mapper, query, opts, records)).then(function (_records) {
+      return resolve(self[op](mapper, query, opts, response)).then(function (_response) {
         // Allow for re-assignment from lifecycle hook
-        records = isUndefined(_records) ? records : _records;
-        return self.getOpt('raw', opts) ? {
-          data: records,
-          found: records.length
-        } : records;
+        return isUndefined(_response) ? response : _response;
       });
     });
   },
@@ -1027,7 +689,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   create: function create(mapper, props, opts) {
     var self = this;
-    var op = undefined;
+    var op = void 0;
     props || (props = {});
     opts || (opts = {});
 
@@ -1038,7 +700,8 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       op = opts.op = 'beforeCreate';
       return resolve(self[op](mapper, props, opts)).then(function (_props) {
         // Allow for re-assignment from lifecycle hook
-        _props = isUndefined(_props) ? props : _props;
+        props = isUndefined(_props) ? props : _props;
+        _props = withoutRelations(mapper, props);
         return new Promise(function (resolve, reject) {
           var collection = client.collection(mapper.table || underscore(mapper.name));
           var method = collection.insertOne ? 'insertOne' : 'insert';
@@ -1047,22 +710,20 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
           });
         });
       }).then(function (cursor) {
-        var record = undefined;
+        var record = void 0;
         var r = cursor.ops ? cursor.ops : cursor;
         self._translateId(r, opts);
         record = isArray(r) ? r[0] : r;
+        cursor.connection = undefined;
+        var response = new Adapter.Response(record, cursor, 'create');
+        response.created = record ? 1 : 0;
+        response = self.respond(response, opts);
 
         // afterCreate lifecycle hook
         op = opts.op = 'afterCreate';
-        return self[op](mapper, props, opts, record).then(function (_record) {
+        return resolve(self[op](mapper, props, opts, response)).then(function (_response) {
           // Allow for re-assignment from lifecycle hook
-          record = isUndefined(_record) ? record : _record;
-          var result = {};
-          fillIn(result, cursor);
-          delete result.connection;
-          result.data = record;
-          result.created = record ? 1 : 0;
-          return self.getOpt('raw', opts) ? result : result.data;
+          return isUndefined(_response) ? response : _response;
         });
       });
     });
@@ -1085,7 +746,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   createMany: function createMany(mapper, props, opts) {
     var self = this;
-    var op = undefined;
+    var op = void 0;
     props || (props = {});
     opts || (opts = {});
 
@@ -1096,7 +757,10 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       op = opts.op = 'beforeCreateMany';
       return resolve(self[op](mapper, props, opts)).then(function (_props) {
         // Allow for re-assignment from lifecycle hook
-        _props = isUndefined(_props) ? props : _props;
+        props = isUndefined(_props) ? props : _props;
+        _props = props.map(function (record) {
+          return withoutRelations(mapper, record);
+        });
         return new Promise(function (resolve, reject) {
           var collection = client.collection(mapper.table || underscore(mapper.name));
           collection.insertMany(_props, insertManyOpts, function (err, cursor) {
@@ -1104,22 +768,20 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
           });
         });
       }).then(function (cursor) {
-        var records = undefined;
+        var records = [];
         var r = cursor.ops ? cursor.ops : cursor;
         self._translateId(r, opts);
         records = r;
+        cursor.connection = undefined;
+        var response = new Adapter.Response(records, cursor, 'createMany');
+        response.created = records.length;
+        response = self.respond(response, opts);
 
         // afterCreateMany lifecycle hook
         op = opts.op = 'afterCreateMany';
-        return self[op](mapper, props, opts, records).then(function (_records) {
+        return resolve(self[op](mapper, props, opts, response)).then(function (_response) {
           // Allow for re-assignment from lifecycle hook
-          records = isUndefined(_records) ? records : _records;
-          var result = {};
-          fillIn(result, cursor);
-          delete result.connection;
-          result.data = records;
-          result.created = records.length;
-          return self.getOpt('raw', opts) ? result : result.data;
+          return isUndefined(_response) ? response : _response;
         });
       });
     });
@@ -1141,7 +803,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   destroy: function destroy(mapper, id, opts) {
     var self = this;
-    var op = undefined;
+    var op = void 0;
     opts || (opts = {});
     var removeOpts = self.getOpt('removeOpts', opts);
 
@@ -1159,17 +821,16 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
         });
       });
     }).then(function (cursor) {
+      cursor.connection = undefined;
+      var response = new Adapter.Response(undefined, cursor, 'destroy');
+      response = self.respond(response, opts);
+
       // afterDestroy lifecycle hook
       op = opts.op = 'afterDestroy';
-      return resolve(self[op](mapper, id, opts, cursor)).then(function (_cursor) {
+      return resolve(self[op](mapper, id, opts, response)).then(function (_response) {
         // Allow for re-assignment from lifecycle hook
-        return isUndefined(_cursor) ? cursor : _cursor;
+        return isUndefined(_response) ? response : _response;
       });
-    }).then(function (cursor) {
-      if (cursor) {
-        delete cursor.connection;
-      }
-      return self.getOpt('raw', opts) ? cursor : undefined;
     });
   },
 
@@ -1189,7 +850,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   destroyAll: function destroyAll(mapper, query, opts) {
     var self = this;
-    var op = undefined;
+    var op = void 0;
     query || (query = {});
     opts || (opts = {});
     var removeOpts = self.getOpt('removeOpts', opts);
@@ -1208,17 +869,16 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
         });
       });
     }).then(function (cursor) {
+      cursor.connection = undefined;
+      var response = new Adapter.Response(undefined, cursor, 'destroyAll');
+      response = self.respond(response, opts);
+
       // afterDestroyAll lifecycle hook
       op = opts.op = 'afterDestroyAll';
-      return resolve(self[op](mapper, query, opts, cursor)).then(function (_cursor) {
+      return resolve(self[op](mapper, query, opts, response)).then(function (_response) {
         // Allow for re-assignment from lifecycle hook
-        return isUndefined(_cursor) ? cursor : _cursor;
+        return isUndefined(_response) ? response : _response;
       });
-    }).then(function (cursor) {
-      if (cursor) {
-        delete cursor.connection;
-      }
-      return self.getOpt('raw', opts) ? cursor : undefined;
     });
   },
 
@@ -1241,7 +901,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     var self = this;
     props || (props = {});
     opts || (opts = {});
-    var op = undefined;
+    var op = void 0;
     var updateOpts = self.getOpt('updateOpts', opts);
 
     return self.find(mapper, id, { raw: false }).then(function (record) {
@@ -1253,7 +913,8 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       return resolve(self[op](mapper, id, props, opts));
     }).then(function (_props) {
       // Allow for re-assignment from lifecycle hook
-      _props = isUndefined(_props) ? props : _props;
+      props = isUndefined(_props) ? props : _props;
+      _props = withoutRelations(mapper, props);
       return self.getClient().then(function (client) {
         return new Promise(function (resolve, reject) {
           var mongoQuery = {};
@@ -1265,20 +926,17 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
         });
       });
     }).then(function (cursor) {
-      if (cursor) {
-        delete cursor.connection;
-      }
       return self.find(mapper, id, { raw: false }).then(function (record) {
+        cursor.connection = undefined;
+        var response = new Adapter.Response(record, cursor, 'update');
+        response.updated = 1;
+        response = self.respond(response, opts);
+
         // afterUpdate lifecycle hook
         op = opts.op = 'afterUpdate';
-        return resolve(self[op](mapper, id, props, opts, record)).then(function (_record) {
+        return resolve(self[op](mapper, id, props, opts, response)).then(function (_response) {
           // Allow for re-assignment from lifecycle hook
-          record = isUndefined(_record) ? record : _record;
-          var result = {};
-          fillIn(result, cursor);
-          result.data = record;
-          result.updated = record ? 1 : 0;
-          return self.getOpt('raw', opts) ? result : result.data;
+          return isUndefined(_response) ? response : _response;
         });
       });
     });
@@ -1304,19 +962,22 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     props || (props = {});
     query || (query = {});
     opts || (opts = {});
-    var op = undefined,
-        ids = undefined;
+    var op = void 0,
+        ids = void 0;
     var updateOpts = self.getOpt('updateOpts', opts);
     updateOpts.multi = true;
 
     return self.getClient().then(function (client) {
       var queryOptions = self.getQueryOptions(mapper, query);
-      queryOptions.$set = props;
       var mongoQuery = self.getQuery(mapper, query);
 
       // beforeUpdateAll lifecycle hook
       op = opts.op = 'beforeUpdateAll';
-      return resolve(self[op](mapper, props, query, opts)).then(function () {
+      return resolve(self[op](mapper, props, query, opts)).then(function (_props) {
+        // Allow for re-assignment from lifecycle hook
+        props = isUndefined(_props) ? props : _props;
+        _props = withoutRelations(mapper, props);
+        queryOptions.$set = _props;
         return self.findAll(mapper, query, { raw: false });
       }).then(function (records) {
         ids = records.map(function (record) {
@@ -1330,24 +991,21 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
           });
         });
       }).then(function (cursor) {
-        if (cursor) {
-          delete cursor.connection;
-        }
         var query = {};
         query[mapper.idAttribute] = {
           'in': ids
         };
         return self.findAll(mapper, query, { raw: false }).then(function (records) {
+          cursor.connection = undefined;
+          var response = new Adapter.Response(records, cursor, 'update');
+          response.updated = records.length;
+          response = self.respond(response, opts);
+
           // afterUpdateAll lifecycle hook
           op = opts.op = 'afterUpdateAll';
-          return self[op](mapper, props, query, opts, records).then(function (_records) {
+          return resolve(self[op](mapper, props, query, opts, response)).then(function (_response) {
             // Allow for re-assignment from lifecycle hook
-            records = isUndefined(_records) ? records : _records;
-            var result = {};
-            fillIn(result, cursor);
-            result.data = records;
-            result.updated = records.length;
-            return self.getOpt('raw', opts) ? result : result.data;
+            return isUndefined(_response) ? response : _response;
           });
         });
       });

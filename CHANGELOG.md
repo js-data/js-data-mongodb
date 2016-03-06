@@ -1,3 +1,12 @@
+##### 1.0.0-alpha.3 - 06 March 2016
+
+###### Backwards compatible API changes
+- Upgraded to latest js-data-adapter-tests, making appropriate changes
+
+###### Other
+- Extracted common adapter functionality into js-data-adapter
+- Extracted common js-data repo utility scripts into js-data-repo-tools
+
 ##### 1.0.0-alpha.2 - 27 February 2016
 
 ###### Backwards compatible bug fixes

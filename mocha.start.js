@@ -3,13 +3,15 @@
 
 // prepare environment for js-data-adapter-tests
 require('babel-polyfill')
-global.assert = require('chai').assert
 
 var JSData = require('js-data')
-var TestRunner = require('js-data-adapter-tests')
+var JSDataAdapterTests = require('js-data-adapter-tests')
 var MongoDBAdapter = require('./')
 
-TestRunner.init({
+global.assert = JSDataAdapterTests.assert
+global.sinon = JSDataAdapterTests.sinon
+
+JSDataAdapterTests.init({
   debug: false,
   JSData: JSData,
   Adapter: MongoDBAdapter,
@@ -27,14 +29,31 @@ TestRunner.init({
     }
   },
   methods: [
+    'beforeCreate',
     'create',
+    'afterCreate',
+    'beforeCreateMany',
     'createMany',
+    'afterCreateMany',
+    'beforeDestroy',
     'destroy',
+    'afterDestroy',
+    'beforeDestroyAll',
     'destroyAll',
+    'afterDestroyAll',
+    'extend',
+    'beforeFind',
     'find',
+    'afterFind',
+    'beforeFindAll',
     'findAll',
+    'afterFindAll',
+    'beforeUpdate',
     'update',
-    'updateAll'
+    'afterUpdate',
+    'beforeUpdateAll',
+    'updateAll',
+    'afterUpdateAll'
   ],
   features: [
     'findHasManyLocalKeys',
