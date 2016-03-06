@@ -102,6 +102,7 @@ var REMOVE_OPTS_DEFAULTS = {};
  * store.defineMapper('user')
  *
  * @class MongoDBAdapter
+ * @extends Adapter
  * @param {Object} [opts] Configuration opts.
  * @param {boolean} [opts.debug=false] Whether to log debugging information.
  * @param {Object} [opts.findOpts] Options to pass to collection#find.

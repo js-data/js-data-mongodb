@@ -1,3 +1,7 @@
+##### 1.0.0-alpha.4 - 06 March 2016
+
+Fixed JSDoc
+
 ##### 1.0.0-alpha.3 - 06 March 2016
 
 ###### Backwards compatible API changes
