@@ -28,32 +28,8 @@ JSDataAdapterTests.init({
       idAttribute: '_id'
     }
   },
-  methods: [
-    'beforeCreate',
-    'create',
-    'afterCreate',
-    'beforeCreateMany',
-    'createMany',
-    'afterCreateMany',
-    'beforeDestroy',
-    'destroy',
-    'afterDestroy',
-    'beforeDestroyAll',
-    'destroyAll',
-    'afterDestroyAll',
-    'extend',
-    'beforeFind',
-    'find',
-    'afterFind',
-    'beforeFindAll',
-    'findAll',
-    'afterFindAll',
-    'beforeUpdate',
-    'update',
-    'afterUpdate',
-    'beforeUpdateAll',
-    'updateAll',
-    'afterUpdateAll'
+  xmethods: [
+    'updateMany'
   ],
   features: [
     'findHasManyLocalKeys',

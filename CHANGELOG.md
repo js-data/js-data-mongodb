@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.5 - 10 March 2016
+
+###### Other
+- Moved more common adapter functionality into js-data-adapter
+
 ##### 1.0.0-alpha.4 - 06 March 2016
 
 Fixed JSDoc

@@ -3,32 +3,21 @@ import {ObjectID} from 'bson'
 import {utils} from 'js-data'
 import Adapter from 'js-data-adapter'
 import {
-  reserved,
-  Response
+  reserved
 } from 'js-data-adapter'
 import underscore from 'mout/string/underscore'
-import unique from 'mout/array/unique'
 
 const {
   addHiddenPropsToTarget,
   classCallCheck,
   extend,
   fillIn,
-  forEachRelation,
   forOwn,
-  get,
   isArray,
   isObject,
   isString,
-  isUndefined,
-  omit,
-  plainCopy,
-  resolve
+  plainCopy
 } = utils
-
-const withoutRelations = function (mapper, props) {
-  return omit(props, mapper.relationFields || [])
-}
 
 const DEFAULTS = {
   /**
@@ -99,7 +88,7 @@ const REMOVE_OPTS_DEFAULTS = {}
  * @param {Object} [opts.updateOpts] Options to pass to collection#update.
  * @param {string} [opts.uri="mongodb://localhost:27017"] MongoDB URI.
  */
-export default function MongoDBAdapter (opts) {
+function MongoDBAdapter (opts) {
   const self = this
   classCallCheck(self, MongoDBAdapter)
   opts || (opts = {})
@@ -233,6 +222,429 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       }
     }
     return r
+  },
+
+  /**
+   * Create a new record.
+   *
+   * @name MongoDBAdapter#create
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {Object} props The record to be created.
+   * @param {Object} [opts] Configuration options.
+   * @param {Object} [opts.insertOpts] Options to pass to collection#insert.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * @return {Promise}
+   */
+
+  /**
+   * Create a new record. Internal method used by Adapter#create.
+   *
+   * @name MongoDBAdapter#_create
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {Object} props The record to be created.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _create (mapper, props, opts) {
+    const self = this
+    props || (props = {})
+    opts || (opts = {})
+    props = plainCopy(props)
+
+    const insertOpts = self.getOpt('insertOpts', opts)
+
+    return self.getClient().then(function (client) {
+      return new Promise(function (resolve, reject) {
+        const collection = client.collection(mapper.table || underscore(mapper.name))
+        const method = collection.insertOne ? 'insertOne' : 'insert'
+        collection[method](props, insertOpts, function (err, cursor) {
+          return err ? reject(err) : resolve(cursor)
+        })
+      })
+    }).then(function (cursor) {
+      let record
+      let r = cursor.ops ? cursor.ops : cursor
+      self._translateId(r, opts)
+      record = isArray(r) ? r[0] : r
+      cursor.connection = undefined
+      return [record, cursor]
+    })
+  },
+
+  /**
+   * Create multiple records in a single batch.
+   *
+   * @name MongoDBAdapter#createMany
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {Object} props The records to be created.
+   * @param {Object} [opts] Configuration options.
+   * @param {Object} [opts.insertManyOpts] Options to pass to
+   * collection#insertMany.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @return {Promise}
+   */
+
+  /**
+   * Create multiple records in a single batch. Internal method used by
+   * Adapter#createMany.
+   *
+   * @name MongoDBAdapter#_createMany
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {Object} props The records to be created.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _createMany (mapper, props, opts) {
+    const self = this
+    props || (props = {})
+    opts || (opts = {})
+    props = plainCopy(props)
+
+    const insertManyOpts = self.getOpt('insertManyOpts', opts)
+
+    return self.getClient().then(function (client) {
+      return new Promise(function (resolve, reject) {
+        const collection = client.collection(mapper.table || underscore(mapper.name))
+        collection.insertMany(props, insertManyOpts, function (err, cursor) {
+          return err ? reject(err) : resolve(cursor)
+        })
+      })
+    }).then(function (cursor) {
+      let records = []
+      let r = cursor.ops ? cursor.ops : cursor
+      self._translateId(r, opts)
+      records = r
+      cursor.connection = undefined
+      return [records, cursor]
+    })
+  },
+
+  /**
+   * Destroy the record with the given primary key.
+   *
+   * @name MongoDBAdapter#destroy
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {(string|number)} id Primary key of the record to destroy.
+   * @param {Object} [opts] Configuration options.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @param {Object} [opts.removeOpts] Options to pass to collection#remove.
+   * @return {Promise}
+   */
+
+  /**
+   * Destroy the record with the given primary key. Internal method used by
+   * Adapter#destroy.
+   *
+   * @name MongoDBAdapter#_destroy
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {(string|number)} id Primary key of the record to destroy.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _destroy (mapper, id, opts) {
+    const self = this
+    opts || (opts = {})
+    const removeOpts = self.getOpt('removeOpts', opts)
+
+    return self.getClient().then(function (client) {
+      return new Promise(function (resolve, reject) {
+        const mongoQuery = {}
+        mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
+        const collection = client.collection(mapper.table || underscore(mapper.name))
+        collection[collection.deleteOne ? 'deleteOne' : 'remove'](mongoQuery, removeOpts, function (err, cursor) {
+          return err ? reject(err) : resolve(cursor)
+        })
+      })
+    }).then(function (cursor) {
+      return [undefined, cursor]
+    })
+  },
+
+  /**
+   * Destroy the records that match the selection query.
+   *
+   * @name MongoDBAdapter#destroyAll
+   * @method
+   * @param {Object} mapper the mapper.
+   * @param {Object} [query] Selection query.
+   * @param {Object} [query.where] Filtering criteria.
+   * @param {string|Array} [query.orderBy] Sorting criteria.
+   * @param {string|Array} [query.sort] Same as `query.sort`.
+   * @param {number} [query.limit] Limit results.
+   * @param {number} [query.skip] Offset results.
+   * @param {number} [query.offset] Same as `query.skip`.
+   * @param {Object} [opts] Configuration options.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @param {Object} [opts.removeOpts] Options to pass to collection#remove.
+   * @return {Promise}
+   */
+
+  /**
+   * Destroy the records that match the selection query. Internal method used by
+   * Adapter#destroyAll.
+   *
+   * @name MongoDBAdapter#_destroyAll
+   * @method
+   * @private
+   * @param {Object} mapper the mapper.
+   * @param {Object} [query] Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _destroyAll (mapper, query, opts) {
+    const self = this
+    query || (query = {})
+    opts || (opts = {})
+    const removeOpts = self.getOpt('removeOpts', opts)
+    fillIn(removeOpts, self.getQueryOptions(mapper, query))
+
+    return self.getClient().then(function (client) {
+      const mongoQuery = self.getQuery(mapper, query)
+      return new Promise(function (resolve, reject) {
+        const collection = client.collection(mapper.table || underscore(mapper.name))
+        collection[collection.deleteMany ? 'deleteMany' : 'remove'](mongoQuery, removeOpts, function (err, cursor) {
+          return err ? reject(err) : resolve(cursor)
+        })
+      })
+    }).then(function (cursor) {
+      cursor.connection = undefined
+      return [undefined, cursor]
+    })
+  },
+
+  /**
+   * Retrieve the record with the given primary key.
+   *
+   * @name MongoDBAdapter#find
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {(string|number)} id Primary key of the record to retrieve.
+   * @param {Object} [opts] Configuration options.
+   * @param {Object} [opts.findOneOpts] Options to pass to collection#findOne.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @param {string[]} [opts.with=[]] Relations to eager load.
+   * @return {Promise}
+   */
+
+  /**
+   * Retrieve the record with the given primary key. Internal method used by
+   * Adapter#find.
+   *
+   * @name MongoDBAdapter#_find
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {(string|number)} id Primary key of the record to retrieve.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _find (mapper, id, opts) {
+    const self = this
+    opts || (opts = {})
+    opts.with || (opts.with = [])
+
+    const findOneOpts = self.getOpt('findOneOpts', opts)
+    findOneOpts.fields || (findOneOpts.fields = {})
+
+    return self.getClient().then(function (client) {
+      return new Promise(function (resolve, reject) {
+        let mongoQuery = {}
+        mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
+        client.collection(mapper.table || underscore(mapper.name)).findOne(mongoQuery, findOneOpts, function (err, record) {
+          return err ? reject(err) : resolve(record)
+        })
+      })
+    }).then(function (record) {
+      if (record) {
+        self._translateId(record, opts)
+      }
+      return [record, {}]
+    })
+  },
+
+  /**
+   * Retrieve the records that match the selection query.
+   *
+   * @name MongoDBAdapter#findAll
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {Object} query Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @param {Object} [opts.findOpts] Options to pass to collection#find.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @param {string[]} [opts.with=[]] Relations to eager load.
+   * @return {Promise}
+   */
+
+  /**
+   * Retrieve the records that match the selection query. Internal method used
+   * by Adapter#findAll.
+   *
+   * @name MongoDBAdapter#_findAll
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {Object} query Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _findAll (mapper, query, opts) {
+    const self = this
+    opts || (opts = {})
+
+    const findOpts = self.getOpt('findOpts', opts)
+    fillIn(findOpts, self.getQueryOptions(mapper, query))
+    findOpts.fields || (findOpts.fields = {})
+    const mongoQuery = self.getQuery(mapper, query)
+
+    return self.getClient().then(function (client) {
+      return new Promise(function (resolve, reject) {
+        client.collection(mapper.table || underscore(mapper.name)).find(mongoQuery, findOpts).toArray(function (err, records) {
+          return err ? reject(err) : resolve(records)
+        })
+      })
+    }).then(function (records) {
+      self._translateId(records, opts)
+      return [records, {}]
+    })
+  },
+
+  /**
+   * Apply the given update to the record with the specified primary key.
+   *
+   * @name MongoDBAdapter#update
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {(string|number)} id The primary key of the record to be updated.
+   * @param {Object} props The update to apply to the record.
+   * @param {Object} [opts] Configuration options.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @param {Object} [opts.updateOpts] Options to pass to collection#update.
+   * @return {Promise}
+   */
+
+  /**
+   * Apply the given update to the record with the specified primary key.
+   * Internal method used by Adapter#update.
+   *
+   * @name MongoDBAdapter#_update
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {(string|number)} id The primary key of the record to be updated.
+   * @param {Object} props The update to apply to the record.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _update (mapper, id, props, opts) {
+    const self = this
+    props || (props = {})
+    opts || (opts = {})
+    const updateOpts = self.getOpt('updateOpts', opts)
+
+    return self.find(mapper, id, { raw: false }).then(function (record) {
+      if (!record) {
+        throw new Error('Not Found')
+      }
+      return self.getClient().then(function (client) {
+        return new Promise(function (resolve, reject) {
+          const mongoQuery = {}
+          mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
+          const collection = client.collection(mapper.table || underscore(mapper.name))
+          collection[collection.updateOne ? 'updateOne' : 'update'](mongoQuery, { $set: props }, updateOpts, function (err, cursor) {
+            return err ? reject(err) : resolve(cursor)
+          })
+        })
+      })
+    }).then(function (cursor) {
+      return self.find(mapper, id, { raw: false }).then(function (record) {
+        cursor.connection = undefined
+        return [record, cursor]
+      })
+    })
+  },
+
+  /**
+   * Apply the given update to all records that match the selection query.
+   *
+   * @name MongoDBAdapter#updateAll
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {Object} props The update to apply to the selected records.
+   * @param {Object} [query] Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @param {Object} [opts.updateOpts] Options to pass to collection#update.
+   * @return {Promise}
+   */
+
+  /**
+   * Apply the given update to all records that match the selection query.
+   * Internal method used by Adapter#updateAll.
+   *
+   * @name MongoDBAdapter#_updateAll
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {Object} props The update to apply to the selected records.
+   * @param {Object} [query] Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _updateAll (mapper, props, query, opts) {
+    const self = this
+    props || (props = {})
+    query || (query = {})
+    opts || (opts = {})
+    let ids
+    const updateOpts = self.getOpt('updateOpts', opts)
+    updateOpts.multi = true
+
+    return Promise.all([
+      self.findAll(mapper, query, { raw: false }),
+      self.getClient()
+    ]).then(function (results) {
+      let [records, client] = results
+      const queryOptions = self.getQueryOptions(mapper, query)
+      const mongoQuery = self.getQuery(mapper, query)
+
+      queryOptions.$set = props
+      ids = records.map(function (record) {
+        return self.toObjectID(mapper, record[mapper.idAttribute])
+      })
+
+      return new Promise(function (resolve, reject) {
+        const collection = client.collection(mapper.table || underscore(mapper.name))
+        collection[collection.updateMany ? 'updateMany' : 'update'](mongoQuery, queryOptions, updateOpts, function (err, cursor) {
+          return err ? reject(err) : resolve(cursor)
+        })
+      })
+    }).then(function (cursor) {
+      const query = {}
+      query[mapper.idAttribute] = {
+        'in': ids
+      }
+      return self.findAll(mapper, query, { raw: false }).then(function (records) {
+        cursor.connection = undefined
+        return [records, cursor]
+      })
+    })
   },
 
   /**
@@ -444,535 +856,20 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   },
 
   /**
-   * Retrieve the record with the given primary key.
+   * Return the localKeys from the given record for the provided relationship.
    *
-   * @name MongoDBAdapter#find
-   * @method
-   * @param {Object} mapper The mapper.
-   * @param {(string|number)} id Primary key of the record to retrieve.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.findOneOpts] Options to pass to collection#findOne.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @param {string[]} [opts.with=[]] Relations to eager load.
-   * @return {Promise}
-   */
-  find (mapper, id, opts) {
-    const self = this
-    let record, op
-    opts || (opts = {})
-    opts.with || (opts.with = [])
-
-    const findOneOpts = self.getOpt('findOneOpts', opts)
-    findOneOpts.fields || (findOneOpts.fields = {})
-
-    return self.getClient().then(function (client) {
-      // beforeFind lifecycle hook
-      op = opts.op = 'beforeFind'
-      return resolve(self[op](mapper, id, opts)).then(function () {
-        return new Promise(function (resolve, reject) {
-          let mongoQuery = {}
-          mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
-          client.collection(mapper.table || underscore(mapper.name)).findOne(mongoQuery, findOneOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      })
-    }).then(function (_record) {
-      if (!_record) {
-        return
-      }
-      record = _record
-      self._translateId(record, opts)
-      const tasks = []
-
-      forEachRelation(mapper, opts, function (def, __opts) {
-        const relatedMapper = def.getRelation()
-        let task
-
-        if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
-          if (def.type === 'hasOne') {
-            task = self.loadHasOne(mapper, def, record, __opts)
-          } else {
-            task = self.loadHasMany(mapper, def, record, __opts)
-          }
-        } else if (def.type === 'hasMany' && def.localKeys) {
-          let localKeys = []
-          let itemKeys = get(record, def.localKeys) || []
-          itemKeys = isArray(itemKeys) ? itemKeys : Object.keys(itemKeys)
-          localKeys = localKeys.concat(itemKeys)
-          task = self.findAll(relatedMapper, {
-            where: {
-              [relatedMapper.idAttribute]: {
-                'in': unique(localKeys).filter(function (x) { return x }).map(function (x) { return self.toObjectID(relatedMapper, x) })
-              }
-            }
-          }, __opts).then(function (relatedItems) {
-            def.setLocalField(record, relatedItems)
-          })
-        } else if (def.type === 'hasMany' && def.foreignKeys) {
-          task = self.findAll(relatedMapper, {
-            where: {
-              [def.foreignKeys]: {
-                'contains': self.makeHasManyForeignKeys(mapper, def, record)
-              }
-            }
-          }, __opts).then(function (relatedItems) {
-            def.setLocalField(record, relatedItems)
-          })
-        } else if (def.type === 'belongsTo') {
-          task = self.loadBelongsTo(mapper, def, record, __opts)
-        }
-        if (task) {
-          tasks.push(task)
-        }
-      })
-
-      return Promise.all(tasks)
-    }).then(function () {
-      let response = new Response(record, {}, 'find')
-      response.found = record ? 1 : 0
-      response = self.respond(response, opts)
-
-      // afterFind lifecycle hook
-      op = opts.op = 'afterFind'
-      return resolve(self[op](mapper, id, opts, response)).then(function (_response) {
-        // Allow for re-assignment from lifecycle hook
-        return isUndefined(_response) ? response : _response
-      })
-    })
-  },
-
-  /**
-   * Retrieve the records that match the selection query.
+   * Override with care.
    *
-   * @name MongoDBAdapter#findAll
+   * @name MongoDBAdapter#makeHasManyLocalKeys
    * @method
-   * @param {Object} mapper The mapper.
-   * @param {Object} query Selection query.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.findOpts] Options to pass to collection#find.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @param {string[]} [opts.with=[]] Relations to eager load.
-   * @return {Promise}
+   * @return {*}
    */
-  findAll (mapper, query, opts) {
+  makeHasManyLocalKeys (mapper, def, record) {
     const self = this
-    opts || (opts = {})
-    opts.with || (opts.with = [])
-
-    let records = []
-    let op
-    const findOpts = self.getOpt('findOpts', opts)
-    fillIn(findOpts, self.getQueryOptions(mapper, query))
-    findOpts.fields || (findOpts.fields = {})
-    const mongoQuery = self.getQuery(mapper, query)
-
-    return self.getClient().then(function (client) {
-      // beforeFindAll lifecycle hook
-      op = opts.op = 'beforeFindAll'
-      return resolve(self[op](mapper, query, opts)).then(function () {
-        return new Promise(function (resolve, reject) {
-          client.collection(mapper.table || underscore(mapper.name)).find(mongoQuery, findOpts).toArray(function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      })
-    }).then(function (_records) {
-      records = _records
-      self._translateId(records, opts)
-      const tasks = []
-      forEachRelation(mapper, opts, function (def, __opts) {
-        const relatedMapper = def.getRelation()
-        let task
-        if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
-          if (def.type === 'hasMany') {
-            task = self.loadHasMany(mapper, def, records, __opts)
-          } else {
-            task = self.loadHasOne(mapper, def, records, __opts)
-          }
-        } else if (def.type === 'hasMany' && def.localKeys) {
-          let localKeys = []
-          records.forEach(function (item) {
-            let itemKeys = item[def.localKeys] || []
-            itemKeys = isArray(itemKeys) ? itemKeys : Object.keys(itemKeys)
-            localKeys = localKeys.concat(itemKeys)
-          })
-          task = self.findAll(relatedMapper, {
-            where: {
-              [relatedMapper.idAttribute]: {
-                'in': unique(localKeys).filter(function (x) { return x }).map(function (x) { return self.toObjectID(relatedMapper, x) })
-              }
-            }
-          }, __opts).then(function (relatedItems) {
-            records.forEach(function (item) {
-              let attached = []
-              let itemKeys = get(item, def.localKeys) || []
-              itemKeys = isArray(itemKeys) ? itemKeys : Object.keys(itemKeys)
-              relatedItems.forEach(function (relatedItem) {
-                if (itemKeys && itemKeys.indexOf(relatedItem[relatedMapper.idAttribute]) !== -1) {
-                  attached.push(relatedItem)
-                }
-              })
-              def.setLocalField(item, attached)
-            })
-            return relatedItems
-          })
-        } else if (def.type === 'hasMany' && def.foreignKeys) {
-          throw new Error('findAll eager load hasMany foreignKeys not supported!')
-        } else if (def.type === 'belongsTo') {
-          task = self.loadBelongsTo(mapper, def, records, __opts)
-        }
-        if (task) {
-          tasks.push(task)
-        }
-      })
-      return Promise.all(tasks)
-    }).then(function () {
-      records || (records = [])
-      let response = new Response(records, {}, 'findAll')
-      response.found = records.length
-      response = self.respond(response, opts)
-
-      // afterFindAll lifecycle hook
-      op = opts.op = 'afterFindAll'
-      return resolve(self[op](mapper, query, opts, response)).then(function (_response) {
-        // Allow for re-assignment from lifecycle hook
-        return isUndefined(_response) ? response : _response
-      })
-    })
-  },
-
-  /**
-   * Create a new record.
-   *
-   * @name MongoDBAdapter#create
-   * @method
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The record to be created.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.insertOpts] Options to pass to collection#insert.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @return {Promise}
-   */
-  create (mapper, props, opts) {
-    const self = this
-    let op
-    props || (props = {})
-    opts || (opts = {})
-
-    const insertOpts = self.getOpt('insertOpts', opts)
-
-    return self.getClient().then(function (client) {
-      // beforeCreate lifecycle hook
-      op = opts.op = 'beforeCreate'
-      return resolve(self[op](mapper, props, opts)).then(function (_props) {
-        // Allow for re-assignment from lifecycle hook
-        props = isUndefined(_props) ? props : _props
-        _props = withoutRelations(mapper, props)
-        return new Promise(function (resolve, reject) {
-          const collection = client.collection(mapper.table || underscore(mapper.name))
-          const method = collection.insertOne ? 'insertOne' : 'insert'
-          collection[method](_props, insertOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      }).then(function (cursor) {
-        let record
-        let r = cursor.ops ? cursor.ops : cursor
-        self._translateId(r, opts)
-        record = isArray(r) ? r[0] : r
-        cursor.connection = undefined
-        let response = new Response(record, cursor, 'create')
-        response.created = record ? 1 : 0
-        response = self.respond(response, opts)
-
-        // afterCreate lifecycle hook
-        op = opts.op = 'afterCreate'
-        return resolve(self[op](mapper, props, opts, response)).then(function (_response) {
-          // Allow for re-assignment from lifecycle hook
-          return isUndefined(_response) ? response : _response
-        })
-      })
-    })
-  },
-
-  /**
-   * Create multiple records in a single batch.
-   *
-   * @name MongoDBAdapter#createMany
-   * @method
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The records to be created.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.insertManyOpts] Options to pass to
-   * collection#insertMany.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @return {Promise}
-   */
-  createMany (mapper, props, opts) {
-    const self = this
-    let op
-    props || (props = {})
-    opts || (opts = {})
-
-    const insertManyOpts = self.getOpt('insertManyOpts', opts)
-
-    return self.getClient().then(function (client) {
-      // beforeCreateMany lifecycle hook
-      op = opts.op = 'beforeCreateMany'
-      return resolve(self[op](mapper, props, opts)).then(function (_props) {
-        // Allow for re-assignment from lifecycle hook
-        props = isUndefined(_props) ? props : _props
-        _props = props.map(function (record) {
-          return withoutRelations(mapper, record)
-        })
-        return new Promise(function (resolve, reject) {
-          const collection = client.collection(mapper.table || underscore(mapper.name))
-          collection.insertMany(_props, insertManyOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      }).then(function (cursor) {
-        let records = []
-        let r = cursor.ops ? cursor.ops : cursor
-        self._translateId(r, opts)
-        records = r
-        cursor.connection = undefined
-        let response = new Response(records, cursor, 'createMany')
-        response.created = records.length
-        response = self.respond(response, opts)
-
-        // afterCreateMany lifecycle hook
-        op = opts.op = 'afterCreateMany'
-        return resolve(self[op](mapper, props, opts, response)).then(function (_response) {
-          // Allow for re-assignment from lifecycle hook
-          return isUndefined(_response) ? response : _response
-        })
-      })
-    })
-  },
-
-  /**
-   * Destroy the record with the given primary key.
-   *
-   * @name MongoDBAdapter#destroy
-   * @method
-   * @param {Object} mapper The mapper.
-   * @param {(string|number)} id Primary key of the record to destroy.
-   * @param {Object} [opts] Configuration options.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @param {Object} [opts.removeOpts] Options to pass to collection#remove.
-   * @return {Promise}
-   */
-  destroy (mapper, id, opts) {
-    const self = this
-    let op
-    opts || (opts = {})
-    const removeOpts = self.getOpt('removeOpts', opts)
-
-    return self.getClient().then(function (client) {
-      // beforeDestroy lifecycle hook
-      op = opts.op = 'beforeDestroy'
-      return resolve(self[op](mapper, id, opts)).then(function () {
-        return new Promise(function (resolve, reject) {
-          const mongoQuery = {}
-          mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
-          const collection = client.collection(mapper.table || underscore(mapper.name))
-          collection[collection.deleteOne ? 'deleteOne' : 'remove'](mongoQuery, removeOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      })
-    }).then(function (cursor) {
-      cursor.connection = undefined
-      let response = new Response(undefined, cursor, 'destroy')
-      response = self.respond(response, opts)
-
-      // afterDestroy lifecycle hook
-      op = opts.op = 'afterDestroy'
-      return resolve(self[op](mapper, id, opts, response)).then(function (_response) {
-        // Allow for re-assignment from lifecycle hook
-        return isUndefined(_response) ? response : _response
-      })
-    })
-  },
-
-  /**
-   * Destroy the records that match the selection query.
-   *
-   * @name MongoDBAdapter#destroyAll
-   * @method
-   * @param {Object} mapper the mapper.
-   * @param {Object} [query] Selection query.
-   * @param {Object} [opts] Configuration options.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @param {Object} [opts.removeOpts] Options to pass to collection#remove.
-   * @return {Promise}
-   */
-  destroyAll (mapper, query, opts) {
-    const self = this
-    let op
-    query || (query = {})
-    opts || (opts = {})
-    const removeOpts = self.getOpt('removeOpts', opts)
-    fillIn(removeOpts, self.getQueryOptions(mapper, query))
-
-    return self.getClient().then(function (client) {
-      // beforeDestroyAll lifecycle hook
-      op = opts.op = 'beforeDestroyAll'
-      return resolve(self[op](mapper, query, opts)).then(function () {
-        const mongoQuery = self.getQuery(mapper, query)
-        return new Promise(function (resolve, reject) {
-          const collection = client.collection(mapper.table || underscore(mapper.name))
-          collection[collection.deleteMany ? 'deleteMany' : 'remove'](mongoQuery, removeOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      })
-    }).then(function (cursor) {
-      cursor.connection = undefined
-      let response = new Response(undefined, cursor, 'destroyAll')
-      response = self.respond(response, opts)
-
-      // afterDestroyAll lifecycle hook
-      op = opts.op = 'afterDestroyAll'
-      return resolve(self[op](mapper, query, opts, response)).then(function (_response) {
-        // Allow for re-assignment from lifecycle hook
-        return isUndefined(_response) ? response : _response
-      })
-    })
-  },
-
-  /**
-   * Apply the given update to the record with the specified primary key.
-   *
-   * @name MongoDBAdapter#update
-   * @method
-   * @param {Object} mapper The mapper.
-   * @param {(string|number)} id The primary key of the record to be updated.
-   * @param {Object} props The update to apply to the record.
-   * @param {Object} [opts] Configuration options.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @param {Object} [opts.updateOpts] Options to pass to collection#update.
-   * @return {Promise}
-   */
-  update (mapper, id, props, opts) {
-    const self = this
-    props || (props = {})
-    opts || (opts = {})
-    let op
-    const updateOpts = self.getOpt('updateOpts', opts)
-
-    return self.find(mapper, id, { raw: false }).then(function (record) {
-      if (!record) {
-        throw new Error('Not Found')
-      }
-      // beforeUpdate lifecycle hook
-      op = opts.op = 'beforeUpdate'
-      return resolve(self[op](mapper, id, props, opts))
-    }).then(function (_props) {
-      // Allow for re-assignment from lifecycle hook
-      props = isUndefined(_props) ? props : _props
-      _props = withoutRelations(mapper, props)
-      return self.getClient().then(function (client) {
-        return new Promise(function (resolve, reject) {
-          const mongoQuery = {}
-          mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
-          const collection = client.collection(mapper.table || underscore(mapper.name))
-          collection[collection.updateOne ? 'updateOne' : 'update'](mongoQuery, { $set: _props }, updateOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      })
-    }).then(function (cursor) {
-      return self.find(mapper, id, { raw: false }).then(function (record) {
-        cursor.connection = undefined
-        let response = new Response(record, cursor, 'update')
-        response.updated = 1
-        response = self.respond(response, opts)
-
-        // afterUpdate lifecycle hook
-        op = opts.op = 'afterUpdate'
-        return resolve(self[op](mapper, id, props, opts, response)).then(function (_response) {
-          // Allow for re-assignment from lifecycle hook
-          return isUndefined(_response) ? response : _response
-        })
-      })
-    })
-  },
-
-  /**
-   * Apply the given update to all records that match the selection query.
-   *
-   * @name MongoDBAdapter#updateAll
-   * @method
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The update to apply to the selected records.
-   * @param {Object} [query] Selection query.
-   * @param {Object} [opts] Configuration options.
-   * @param {boolean} [opts.raw=false] Whether to return a more detailed
-   * response object.
-   * @param {Object} [opts.updateOpts] Options to pass to collection#update.
-   * @return {Promise}
-   */
-  updateAll (mapper, props, query, opts) {
-    const self = this
-    props || (props = {})
-    query || (query = {})
-    opts || (opts = {})
-    let op, ids
-    const updateOpts = self.getOpt('updateOpts', opts)
-    updateOpts.multi = true
-
-    return self.getClient().then(function (client) {
-      const queryOptions = self.getQueryOptions(mapper, query)
-      const mongoQuery = self.getQuery(mapper, query)
-
-      // beforeUpdateAll lifecycle hook
-      op = opts.op = 'beforeUpdateAll'
-      return resolve(self[op](mapper, props, query, opts)).then(function (_props) {
-        // Allow for re-assignment from lifecycle hook
-        props = isUndefined(_props) ? props : _props
-        _props = withoutRelations(mapper, props)
-        queryOptions.$set = _props
-        return self.findAll(mapper, query, { raw: false })
-      }).then(function (records) {
-        ids = records.map(function (record) {
-          return self.toObjectID(mapper, record[mapper.idAttribute])
-        })
-
-        return new Promise(function (resolve, reject) {
-          const collection = client.collection(mapper.table || underscore(mapper.name))
-          collection[collection.updateMany ? 'updateMany' : 'update'](mongoQuery, queryOptions, updateOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
-        })
-      }).then(function (cursor) {
-        const query = {}
-        query[mapper.idAttribute] = {
-          'in': ids
-        }
-        return self.findAll(mapper, query, { raw: false }).then(function (records) {
-          cursor.connection = undefined
-          let response = new Response(records, cursor, 'update')
-          response.updated = records.length
-          response = self.respond(response, opts)
-
-          // afterUpdateAll lifecycle hook
-          op = opts.op = 'afterUpdateAll'
-          return resolve(self[op](mapper, props, query, opts, response)).then(function (_response) {
-            // Allow for re-assignment from lifecycle hook
-            return isUndefined(_response) ? response : _response
-          })
-        })
-      })
+    const relatedMapper = def.getRelation()
+    const localKeys = Adapter.prototype.makeHasManyLocalKeys.call(self, mapper, def, record)
+    return localKeys.map(function (key) {
+      return self.toObjectID(relatedMapper, key)
     })
   },
 
@@ -986,3 +883,5 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     throw new Error('not supported!')
   }
 })
+
+module.exports = MongoDBAdapter
