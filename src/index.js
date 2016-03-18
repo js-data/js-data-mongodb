@@ -7,18 +7,6 @@ import {
 } from 'js-data-adapter'
 import underscore from 'mout/string/underscore'
 
-const {
-  addHiddenPropsToTarget,
-  classCallCheck,
-  extend,
-  fillIn,
-  forOwn,
-  isArray,
-  isObject,
-  isString,
-  plainCopy
-} = utils
-
 const DEFAULTS = {
   /**
    * Convert ObjectIDs to strings when pulling records out of the database.
@@ -39,6 +27,7 @@ const DEFAULTS = {
   uri: 'mongodb://localhost:27017'
 }
 
+const COUNT_OPTS_DEFAULTS = {}
 const FIND_OPTS_DEFAULTS = {}
 const FIND_ONE_OPTS_DEFAULTS = {}
 const INSERT_OPTS_DEFAULTS = {}
@@ -75,6 +64,7 @@ const REMOVE_OPTS_DEFAULTS = {}
  * @extends Adapter
  * @param {Object} [opts] Configuration opts.
  * @param {boolean} [opts.debug=false] Whether to log debugging information.
+ * @param {Object} [opts.countOpts] Options to pass to collection#count.
  * @param {Object} [opts.findOpts] Options to pass to collection#find.
  * @param {Object} [opts.findOneOpts] Options to pass to collection#findOne.
  * @param {Object} [opts.insertOpts] Options to pass to collection#insert.
@@ -90,13 +80,23 @@ const REMOVE_OPTS_DEFAULTS = {}
  */
 function MongoDBAdapter (opts) {
   const self = this
-  classCallCheck(self, MongoDBAdapter)
+  utils.classCallCheck(self, MongoDBAdapter)
   opts || (opts = {})
-  if (isString(opts)) {
+  if (utils.isString(opts)) {
     opts = { uri: opts }
   }
-  fillIn(opts, DEFAULTS)
+  utils.fillIn(opts, DEFAULTS)
   Adapter.call(self, opts)
+
+  /**
+   * Default options to pass to collection#count.
+   *
+   * @name MongoDBAdapter#countOpts
+   * @type {Object}
+   * @default {}
+   */
+  self.countOpts || (self.countOpts = {})
+  utils.fillIn(self.countOpts, COUNT_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#find.
@@ -106,7 +106,7 @@ function MongoDBAdapter (opts) {
    * @default {}
    */
   self.findOpts || (self.findOpts = {})
-  fillIn(self.findOpts, FIND_OPTS_DEFAULTS)
+  utils.fillIn(self.findOpts, FIND_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#findOne.
@@ -116,7 +116,7 @@ function MongoDBAdapter (opts) {
    * @default {}
    */
   self.findOneOpts || (self.findOneOpts = {})
-  fillIn(self.findOneOpts, FIND_ONE_OPTS_DEFAULTS)
+  utils.fillIn(self.findOneOpts, FIND_ONE_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#insert.
@@ -126,7 +126,7 @@ function MongoDBAdapter (opts) {
    * @default {}
    */
   self.insertOpts || (self.insertOpts = {})
-  fillIn(self.insertOpts, INSERT_OPTS_DEFAULTS)
+  utils.fillIn(self.insertOpts, INSERT_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#insertMany.
@@ -136,7 +136,7 @@ function MongoDBAdapter (opts) {
    * @default {}
    */
   self.insertManyOpts || (self.insertManyOpts = {})
-  fillIn(self.insertManyOpts, INSERT_MANY_OPTS_DEFAULTS)
+  utils.fillIn(self.insertManyOpts, INSERT_MANY_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#update.
@@ -146,7 +146,7 @@ function MongoDBAdapter (opts) {
    * @default {}
    */
   self.updateOpts || (self.updateOpts = {})
-  fillIn(self.updateOpts, UPDATE_OPTS_DEFAULTS)
+  utils.fillIn(self.updateOpts, UPDATE_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#update.
@@ -156,7 +156,7 @@ function MongoDBAdapter (opts) {
    * @default {}
    */
   self.removeOpts || (self.removeOpts = {})
-  fillIn(self.removeOpts, REMOVE_OPTS_DEFAULTS)
+  utils.fillIn(self.removeOpts, REMOVE_OPTS_DEFAULTS)
 
   /**
    * A Promise that resolves to a reference to the MongoDB client being used by
@@ -198,9 +198,9 @@ Object.defineProperty(MongoDBAdapter, '__super__', {
  * properties to the MongoDBAdapter itself.
  * @return {Object} MongoDBAdapter of `MongoDBAdapter`.
  */
-MongoDBAdapter.extend = extend
+MongoDBAdapter.extend = utils.extend
 
-addHiddenPropsToTarget(MongoDBAdapter.prototype, {
+utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Translate ObjectIDs to strings.
    *
@@ -211,17 +211,61 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   _translateId (r, opts) {
     opts || (opts = {})
     if (this.getOpt('translateId', opts)) {
-      if (isArray(r)) {
+      if (utils.isArray(r)) {
         r.forEach(function (_r) {
           const __id = _r._id ? _r._id.toString() : _r._id
           _r._id = typeof __id === 'string' ? __id : _r._id
         })
-      } else if (isObject(r)) {
+      } else if (utils.isObject(r)) {
         const __id = r._id ? r._id.toString() : r._id
         r._id = typeof __id === 'string' ? __id : r._id
       }
     }
     return r
+  },
+
+  /**
+   * Retrieve the number of records that match the selection query.
+   *
+   * @name MongoDBAdapter#count
+   * @method
+   * @param {Object} mapper The mapper.
+   * @param {Object} query Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @param {Object} [opts.countOpts] Options to pass to collection#count.
+   * @param {boolean} [opts.raw=false] Whether to return a more detailed
+   * response object.
+   * @param {string[]} [opts.with=[]] Relations to eager load.
+   * @return {Promise}
+   */
+
+  /**
+   * Retrieve the records that match the selection query. Internal method used
+   * by Adapter#count.
+   *
+   * @name MongoDBAdapter#_count
+   * @method
+   * @private
+   * @param {Object} mapper The mapper.
+   * @param {Object} query Selection query.
+   * @param {Object} [opts] Configuration options.
+   * @return {Promise}
+   */
+  _count (mapper, query, opts) {
+    const self = this
+    opts || (opts = {})
+
+    const countOpts = self.getOpt('countOpts', opts)
+    utils.fillIn(countOpts, self.getQueryOptions(mapper, query))
+    const mongoQuery = self.getQuery(mapper, query)
+
+    return self.getClient().then(function (client) {
+      return new Promise(function (resolve, reject) {
+        client.collection(mapper.table || underscore(mapper.name)).count(mongoQuery, countOpts, function (err, count) {
+          return err ? reject(err) : resolve([count, {}])
+        })
+      })
+    })
   },
 
   /**
@@ -252,7 +296,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     const self = this
     props || (props = {})
     opts || (opts = {})
-    props = plainCopy(props)
+    props = utils.plainCopy(props)
 
     const insertOpts = self.getOpt('insertOpts', opts)
 
@@ -268,7 +312,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       let record
       let r = cursor.ops ? cursor.ops : cursor
       self._translateId(r, opts)
-      record = isArray(r) ? r[0] : r
+      record = utils.isArray(r) ? r[0] : r
       cursor.connection = undefined
       return [record, cursor]
     })
@@ -305,7 +349,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     const self = this
     props || (props = {})
     opts || (opts = {})
-    props = plainCopy(props)
+    props = utils.plainCopy(props)
 
     const insertManyOpts = self.getOpt('insertManyOpts', opts)
 
@@ -408,7 +452,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     query || (query = {})
     opts || (opts = {})
     const removeOpts = self.getOpt('removeOpts', opts)
-    fillIn(removeOpts, self.getQueryOptions(mapper, query))
+    utils.fillIn(removeOpts, self.getQueryOptions(mapper, query))
 
     return self.getClient().then(function (client) {
       const mongoQuery = self.getQuery(mapper, query)
@@ -507,7 +551,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     opts || (opts = {})
 
     const findOpts = self.getOpt('findOpts', opts)
-    fillIn(findOpts, self.getQueryOptions(mapper, query))
+    utils.fillIn(findOpts, self.getQueryOptions(mapper, query))
     findOpts.fields || (findOpts.fields = {})
     const mongoQuery = self.getQuery(mapper, query)
 
@@ -674,12 +718,12 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @return {Object}
    */
   getQuery (mapper, query) {
-    query = plainCopy(query || {})
+    query = utils.plainCopy(query || {})
     query.where || (query.where = {})
 
-    forOwn(query, function (config, keyword) {
+    utils.forOwn(query, function (config, keyword) {
       if (reserved.indexOf(keyword) === -1) {
-        if (isObject(config)) {
+        if (utils.isObject(config)) {
           query.where[keyword] = config
         } else {
           query.where[keyword] = {
@@ -693,13 +737,13 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     let mongoQuery = {}
 
     if (Object.keys(query.where).length !== 0) {
-      forOwn(query.where, function (criteria, field) {
-        if (!isObject(criteria)) {
+      utils.forOwn(query.where, function (criteria, field) {
+        if (!utils.isObject(criteria)) {
           query.where[field] = {
             '==': criteria
           }
         }
-        forOwn(criteria, function (v, op) {
+        utils.forOwn(criteria, function (v, op) {
           if (op === '==' || op === '===' || op === 'contains') {
             mongoQuery[field] = v
           } else if (op === '!=' || op === '!==' || op === 'notContains') {
@@ -799,20 +843,20 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @return {Object}
    */
   getQueryOptions (mapper, query) {
-    query = plainCopy(query || {})
+    query = utils.plainCopy(query || {})
     query.orderBy = query.orderBy || query.sort
     query.skip = query.skip || query.offset
 
     let queryOptions = {}
 
     if (query.orderBy) {
-      if (isString(query.orderBy)) {
+      if (utils.isString(query.orderBy)) {
         query.orderBy = [
           [query.orderBy, 'asc']
         ]
       }
       for (var i = 0; i < query.orderBy.length; i++) {
-        if (isString(query.orderBy[i])) {
+        if (utils.isString(query.orderBy[i])) {
           query.orderBy[i] = [query.orderBy[i], 'asc']
         }
       }

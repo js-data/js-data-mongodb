@@ -29,6 +29,8 @@ JSDataAdapterTests.init({
     }
   },
   xmethods: [
+    // sum not supported yet, I don't quite understand collection#aggregate...
+    'sum',
     'updateMany'
   ],
   features: [

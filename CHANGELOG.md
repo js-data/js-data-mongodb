@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.6 - 17 March 2016
+
+###### Backwards compatible API changes
+- Added count method
+
 ##### 1.0.0-alpha.5 - 10 March 2016
 
 ###### Other
