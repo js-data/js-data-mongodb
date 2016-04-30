@@ -1,3 +1,33 @@
+##### 1.0.0-beta.1 - 30 April 2016
+
+###### Breaking changes
+- How you must now import in ES2015:
+
+    ```js
+    import MongoDBAdapter from 'js-data-mongodb'
+    const adapter = new MongoDBAdapter()
+    ```
+    or
+    ```js
+    import {MongoDBAdapter, version} from 'js-data-mongodb'
+    console.log(version)
+    const adapter = new MongoDBAdapter()
+    ```
+
+- How you must now import in ES5:
+
+    ```js
+    var JSDataMongoDB = require('js-data-mongodb')
+    var MongoDBAdapter = JSDataMongoDB.MongoDBAdapter
+    var adapter = new MongoDBAdapter()
+    ```
+
+- Moved some `dist` files to the `release` branch to reduce noise
+
+###### Other
+- Upgraded to `js-data-adapter` v0.6.1
+- Now using js-data JSDoc template
+
 ##### 1.0.0-alpha.6 - 17 March 2016
 
 ###### Backwards compatible API changes

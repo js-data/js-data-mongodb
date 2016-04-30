@@ -1,8 +1,8 @@
 import {MongoClient} from 'mongodb'
 import {ObjectID} from 'bson'
 import {utils} from 'js-data'
-import Adapter from 'js-data-adapter'
 import {
+  Adapter,
   reserved
 } from 'js-data-adapter'
 import underscore from 'mout/string/underscore'
@@ -62,23 +62,20 @@ const REMOVE_OPTS_DEFAULTS = {}
  *
  * @class MongoDBAdapter
  * @extends Adapter
- * @param {Object} [opts] Configuration opts.
- * @param {boolean} [opts.debug=false] Whether to log debugging information.
- * @param {Object} [opts.countOpts] Options to pass to collection#count.
- * @param {Object} [opts.findOpts] Options to pass to collection#find.
- * @param {Object} [opts.findOneOpts] Options to pass to collection#findOne.
- * @param {Object} [opts.insertOpts] Options to pass to collection#insert.
- * @param {Object} [opts.insertManyOpts] Options to pass to
- * collection#insertMany.
- * @param {boolean} [opts.raw=false] Whether to return detailed result objects
- * instead of just record data.
- * @param {Object} [opts.removeOpts] Options to pass to collection#remove.
- * @param {boolean} [opts.translateId=true] Convert ObjectIDs to strings when
- * pulling records out of the database.
- * @param {Object} [opts.updateOpts] Options to pass to collection#update.
- * @param {string} [opts.uri="mongodb://localhost:27017"] MongoDB URI.
+ * @param {Object} [opts] Configuration options.
+ * @param {boolean} [opts.debug=false] See {@link Adapter#debug}.
+ * @param {Object} [opts.countOpts] See {@link MongoDBAdapter#countOpts}.
+ * @param {Object} [opts.findOpts] See {@link MongoDBAdapter#findOpts}.
+ * @param {Object} [opts.findOneOpts] See {@link MongoDBAdapter#findOneOpts}.
+ * @param {Object} [opts.insertOpts] See {@link MongoDBAdapter#insertOpts}.
+ * @param {Object} [opts.insertManyOpts] See {@link MongoDBAdapter#insertManyOpts}.
+ * @param {boolean} [opts.raw=false] See {@link Adapter#raw}.
+ * @param {Object} [opts.removeOpts] See {@link MongoDBAdapter#removeOpts}.
+ * @param {boolean} [opts.translateId=true] See {@link MongoDBAdapter#translateId}.
+ * @param {Object} [opts.updateOpts] See {@link MongoDBAdapter#updateOpts}.
+ * @param {string} [opts.uri="mongodb://localhost:27017"] See {@link MongoDBAdapter#uri}.
  */
-function MongoDBAdapter (opts) {
+export function MongoDBAdapter (opts) {
   const self = this
   utils.classCallCheck(self, MongoDBAdapter)
   opts || (opts = {})
@@ -190,13 +187,24 @@ Object.defineProperty(MongoDBAdapter, '__super__', {
 /**
  * Alternative to ES6 class syntax for extending `MongoDBAdapter`.
  *
- * @name MongoDBAdapter.extend
- * @method
+ * @example <caption>Using the ES2015 class syntax.</caption>
+ * class MyMongoDBAdapter extends MongoDBAdapter {...}
+ * const adapter = new MyMongoDBAdapter()
+ *
+ * @example <caption>Using {@link MongoDBAdapter.extend}.</caption>
+ * var instanceProps = {...}
+ * var classProps = {...}
+ *
+ * var MyMongoDBAdapter = MongoDBAdapter.extend(instanceProps, classProps)
+ * var adapter = new MyMongoDBAdapter()
+ *
+ * @method MongoDBAdapter.extend
+ * @static
  * @param {Object} [instanceProps] Properties that will be added to the
- * prototype of the MongoDBAdapter.
+ * prototype of the subclass.
  * @param {Object} [classProps] Properties that will be added as static
- * properties to the MongoDBAdapter itself.
- * @return {Object} MongoDBAdapter of `MongoDBAdapter`.
+ * properties to the subclass itself.
+ * @return {Object} Subclass of `MongoDBAdapter`.
  */
 MongoDBAdapter.extend = utils.extend
 
@@ -204,8 +212,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Translate ObjectIDs to strings.
    *
-   * @name MongoDBAdapter#_translateId
-   * @method
+   * @method MongoDBAdapter#_translateId
    * @return {*}
    */
   _translateId (r, opts) {
@@ -227,8 +234,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Retrieve the number of records that match the selection query.
    *
-   * @name MongoDBAdapter#count
-   * @method
+   * @method MongoDBAdapter#count
    * @param {Object} mapper The mapper.
    * @param {Object} query Selection query.
    * @param {Object} [opts] Configuration options.
@@ -243,8 +249,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Retrieve the records that match the selection query. Internal method used
    * by Adapter#count.
    *
-   * @name MongoDBAdapter#_count
-   * @method
+   * @method MongoDBAdapter#_count
    * @private
    * @param {Object} mapper The mapper.
    * @param {Object} query Selection query.
@@ -271,8 +276,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Create a new record.
    *
-   * @name MongoDBAdapter#create
-   * @method
+   * @method MongoDBAdapter#create
    * @param {Object} mapper The mapper.
    * @param {Object} props The record to be created.
    * @param {Object} [opts] Configuration options.
@@ -284,8 +288,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Create a new record. Internal method used by Adapter#create.
    *
-   * @name MongoDBAdapter#_create
-   * @method
+   * @method MongoDBAdapter#_create
    * @private
    * @param {Object} mapper The mapper.
    * @param {Object} props The record to be created.
@@ -321,8 +324,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Create multiple records in a single batch.
    *
-   * @name MongoDBAdapter#createMany
-   * @method
+   * @method MongoDBAdapter#createMany
    * @param {Object} mapper The mapper.
    * @param {Object} props The records to be created.
    * @param {Object} [opts] Configuration options.
@@ -337,8 +339,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Create multiple records in a single batch. Internal method used by
    * Adapter#createMany.
    *
-   * @name MongoDBAdapter#_createMany
-   * @method
+   * @method MongoDBAdapter#_createMany
    * @private
    * @param {Object} mapper The mapper.
    * @param {Object} props The records to be created.
@@ -373,8 +374,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Destroy the record with the given primary key.
    *
-   * @name MongoDBAdapter#destroy
-   * @method
+   * @method MongoDBAdapter#destroy
    * @param {Object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to destroy.
    * @param {Object} [opts] Configuration options.
@@ -388,8 +388,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Destroy the record with the given primary key. Internal method used by
    * Adapter#destroy.
    *
-   * @name MongoDBAdapter#_destroy
-   * @method
+   * @method MongoDBAdapter#_destroy
    * @private
    * @param {Object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to destroy.
@@ -418,8 +417,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Destroy the records that match the selection query.
    *
-   * @name MongoDBAdapter#destroyAll
-   * @method
+   * @method MongoDBAdapter#destroyAll
    * @param {Object} mapper the mapper.
    * @param {Object} [query] Selection query.
    * @param {Object} [query.where] Filtering criteria.
@@ -439,8 +437,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Destroy the records that match the selection query. Internal method used by
    * Adapter#destroyAll.
    *
-   * @name MongoDBAdapter#_destroyAll
-   * @method
+   * @method MongoDBAdapter#_destroyAll
    * @private
    * @param {Object} mapper the mapper.
    * @param {Object} [query] Selection query.
@@ -471,8 +468,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Retrieve the record with the given primary key.
    *
-   * @name MongoDBAdapter#find
-   * @method
+   * @method MongoDBAdapter#find
    * @param {Object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to retrieve.
    * @param {Object} [opts] Configuration options.
@@ -487,8 +483,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Retrieve the record with the given primary key. Internal method used by
    * Adapter#find.
    *
-   * @name MongoDBAdapter#_find
-   * @method
+   * @method MongoDBAdapter#_find
    * @private
    * @param {Object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to retrieve.
@@ -522,8 +517,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Retrieve the records that match the selection query.
    *
-   * @name MongoDBAdapter#findAll
-   * @method
+   * @method MongoDBAdapter#findAll
    * @param {Object} mapper The mapper.
    * @param {Object} query Selection query.
    * @param {Object} [opts] Configuration options.
@@ -538,8 +532,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Retrieve the records that match the selection query. Internal method used
    * by Adapter#findAll.
    *
-   * @name MongoDBAdapter#_findAll
-   * @method
+   * @method MongoDBAdapter#_findAll
    * @private
    * @param {Object} mapper The mapper.
    * @param {Object} query Selection query.
@@ -570,8 +563,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Apply the given update to the record with the specified primary key.
    *
-   * @name MongoDBAdapter#update
-   * @method
+   * @method MongoDBAdapter#update
    * @param {Object} mapper The mapper.
    * @param {(string|number)} id The primary key of the record to be updated.
    * @param {Object} props The update to apply to the record.
@@ -586,8 +578,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Apply the given update to the record with the specified primary key.
    * Internal method used by Adapter#update.
    *
-   * @name MongoDBAdapter#_update
-   * @method
+   * @method MongoDBAdapter#_update
    * @private
    * @param {Object} mapper The mapper.
    * @param {(string|number)} id The primary key of the record to be updated.
@@ -626,8 +617,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Apply the given update to all records that match the selection query.
    *
-   * @name MongoDBAdapter#updateAll
-   * @method
+   * @method MongoDBAdapter#updateAll
    * @param {Object} mapper The mapper.
    * @param {Object} props The update to apply to the selected records.
    * @param {Object} [query] Selection query.
@@ -642,8 +632,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Apply the given update to all records that match the selection query.
    * Internal method used by Adapter#updateAll.
    *
-   * @name MongoDBAdapter#_updateAll
-   * @method
+   * @method MongoDBAdapter#_updateAll
    * @private
    * @param {Object} mapper The mapper.
    * @param {Object} props The update to apply to the selected records.
@@ -697,8 +686,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * Useful when you need to do anything custom with the MongoDB client library.
    *
-   * @name MongoDBAdapter#getClient
-   * @method
+   * @method MongoDBAdapter#getClient
    * @return {Object} MongoDB client.
    */
   getClient () {
@@ -713,8 +701,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * - where
    *   - and bunch of filtering operators
    *
-   * @name MongoDBAdapter#getQuery
-   * @method
+   * @method MongoDBAdapter#getQuery
    * @return {Object}
    */
   getQuery (mapper, query) {
@@ -838,8 +825,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * - skip/offset
    * - orderBy/sort
    *
-   * @name MongoDBAdapter#getQueryOptions
-   * @method
+   * @method MongoDBAdapter#getQueryOptions
    * @return {Object}
    */
   getQueryOptions (mapper, query) {
@@ -877,8 +863,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Turn an _id into an ObjectID if it isn't already an ObjectID.
    *
-   * @name MongoDBAdapter#toObjectID
-   * @method
+   * @method MongoDBAdapter#toObjectID
    * @return {*}
    */
   toObjectID (mapper, id) {
@@ -891,8 +876,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Return the foreignKey from the given record for the provided relationship.
    *
-   * @name MongoDBAdapter#makeBelongsToForeignKey
-   * @method
+   * @method MongoDBAdapter#makeBelongsToForeignKey
    * @return {*}
    */
   makeBelongsToForeignKey (mapper, def, record) {
@@ -904,8 +888,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * Override with care.
    *
-   * @name MongoDBAdapter#makeHasManyLocalKeys
-   * @method
+   * @method MongoDBAdapter#makeHasManyLocalKeys
    * @return {*}
    */
   makeHasManyLocalKeys (mapper, def, record) {
@@ -920,12 +903,27 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   /**
    * Not supported.
    *
-   * @name MongoDBAdapter#updateMany
-   * @method
+   * @method MongoDBAdapter#updateMany
    */
   updateMany () {
     throw new Error('not supported!')
   }
 })
 
-module.exports = MongoDBAdapter
+/**
+ * Details of the current version of the `js-data-mongodb` module.
+ *
+ * @name module:js-data-mongodb.version
+ * @type {Object}
+ * @property {string} version.full The full semver value.
+ * @property {number} version.major The major version number.
+ * @property {number} version.minor The minor version number.
+ * @property {number} version.patch The patch version number.
+ * @property {(string|boolean)} version.alpha The alpha version value,
+ * otherwise `false` if the current version is not alpha.
+ * @property {(string|boolean)} version.beta The beta version value,
+ * otherwise `false` if the current version is not beta.
+ */
+export const version = '<%= version %>'
+
+export default MongoDBAdapter

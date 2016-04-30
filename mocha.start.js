@@ -6,9 +6,11 @@ require('babel-polyfill')
 
 var JSData = require('js-data')
 var JSDataAdapterTests = require('js-data-adapter-tests')
-var MongoDBAdapter = require('./')
+var JSDataMongoDB = require('./')
+var version = JSDataMongoDB.version
+var MongoDBAdapter = JSDataMongoDB.MongoDBAdapter
 
-global.assert = JSDataAdapterTests.assert
+var assert = global.assert = JSDataAdapterTests.assert
 global.sinon = JSDataAdapterTests.sinon
 
 JSDataAdapterTests.init({
@@ -40,3 +42,8 @@ JSDataAdapterTests.init({
 })
 
 require('./test/find.test')
+
+describe('exports', function () {
+  assert(version)
+  assert(version.full)
+})
