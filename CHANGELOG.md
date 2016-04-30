@@ -1,3 +1,71 @@
+##### 1.0.0-beta.1 - 30 April 2016
+
+###### Breaking changes
+- How you must now import in ES2015:
+
+    ```js
+    import MongoDBAdapter from 'js-data-mongodb'
+    const adapter = new MongoDBAdapter()
+    ```
+    or
+    ```js
+    import {MongoDBAdapter, version} from 'js-data-mongodb'
+    console.log(version)
+    const adapter = new MongoDBAdapter()
+    ```
+
+- How you must now import in ES5:
+
+    ```js
+    var JSDataMongoDB = require('js-data-mongodb')
+    var MongoDBAdapter = JSDataMongoDB.MongoDBAdapter
+    var adapter = new MongoDBAdapter()
+    ```
+
+- Moved some `dist` files to the `release` branch to reduce noise
+
+###### Other
+- Upgraded to `js-data-adapter` v0.6.1
+- Now using js-data JSDoc template
+
+##### 1.0.0-alpha.6 - 17 March 2016
+
+###### Backwards compatible API changes
+- Added count method
+
+##### 1.0.0-alpha.5 - 10 March 2016
+
+###### Other
+- Moved more common adapter functionality into js-data-adapter
+
+##### 1.0.0-alpha.4 - 06 March 2016
+
+Fixed JSDoc
+
+##### 1.0.0-alpha.3 - 06 March 2016
+
+###### Backwards compatible API changes
+- Upgraded to latest js-data-adapter-tests, making appropriate changes
+
+###### Other
+- Extracted common adapter functionality into js-data-adapter
+- Extracted common js-data repo utility scripts into js-data-repo-tools
+
+##### 1.0.0-alpha.2 - 27 February 2016
+
+###### Backwards compatible bug fixes
+- Fixed use of options
+
+##### 1.0.0-alpha.1 - 26 February 2016
+
+###### Breaking API changes
+- Now depends on js-data 3.x
+
+###### Backwards compatible API changes
+- Added createMany and updateMany methods
+- Added lifecycle methods
+- Added insertOpts, insertManyOpts, updateOpts, removeOpts, findOpts, and findOneOpts options
+
 ##### 0.7.0 - 19 February 2016
 
 ###### Backwards compatible API changes

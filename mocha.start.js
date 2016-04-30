@@ -3,37 +3,47 @@
 
 // prepare environment for js-data-adapter-tests
 require('babel-polyfill')
-global.assert = require('chai').assert
 
 var JSData = require('js-data')
-var TestRunner = require('js-data-adapter-tests')
-var MongoDBAdapter = require('./')
+var JSDataAdapterTests = require('js-data-adapter-tests')
+var JSDataMongoDB = require('./')
+var version = JSDataMongoDB.version
+var MongoDBAdapter = JSDataMongoDB.MongoDBAdapter
 
-TestRunner.init({
+var assert = global.assert = JSDataAdapterTests.assert
+global.sinon = JSDataAdapterTests.sinon
+
+JSDataAdapterTests.init({
   debug: false,
-  DS: JSData.DS,
+  JSData: JSData,
   Adapter: MongoDBAdapter,
   adapterConfig: {
     uri: 'mongodb://localhost:27017'
   },
-  storeConfig: {
-    bypassCache: true,
-    linkRelations: false,
-    cacheResponse: false,
-    idAttribute: '_id',
-    log: false,
-    debug: false
+  containerConfig: {
+    mapperDefaults: {
+      idAttribute: '_id'
+    }
   },
-  features: [],
-  methods: [
-    'create',
-    'destroy',
-    'destroyAll',
-    'find',
-    'findAll',
-    'update',
-    'updateAll'
+  storeConfig: {
+    mapperDefaults: {
+      idAttribute: '_id'
+    }
+  },
+  xmethods: [
+    // sum not supported yet, I don't quite understand collection#aggregate...
+    'sum',
+    'updateMany'
+  ],
+  features: [
+    'findHasManyLocalKeys',
+    'findHasManyForeignKeys'
   ]
 })
 
 require('./test/find.test')
+
+describe('exports', function () {
+  assert(version)
+  assert(version.full)
+})

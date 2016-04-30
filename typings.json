@@ -1,0 +1,8 @@
+{
+  "name": "js-data-mongodb",
+  "version": false,
+  "main": "./dist/js-data-mongodb.d.ts",
+  "ambientDependencies": {
+    "es6-shim": "registry:dt/es6-shim"
+  }
+}
