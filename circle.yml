@@ -1,7 +1,10 @@
 machine:
   node:
     version: 4.1.0
-
+dependencies:
+  pre:
+    - npm install -g npm
+    - npm install js-data@^3.0.0-beta.3 mongodb bson
 test:
   override:
     - npm run ci
