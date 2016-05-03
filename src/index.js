@@ -913,6 +913,10 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
 /**
  * Details of the current version of the `js-data-mongodb` module.
  *
+ * @example
+ * import {version} from 'js-data-mongodb'
+ * console.log(version.full)
+ *
  * @name module:js-data-mongodb.version
  * @type {Object}
  * @property {string} version.full The full semver value.
@@ -925,5 +929,34 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
  * otherwise `false` if the current version is not beta.
  */
 export const version = '<%= version %>'
+
+/**
+ * {@link MongoDBAdapter} class.
+ *
+ * @example
+ * import {MongoDBAdapter} from 'js-data-mongodb'
+ * const adapter = new MongoDBAdapter()
+ *
+ * @name module:js-data-mongodb.MongoDBAdapter
+ * @see MongoDBAdapter
+ * @type {Constructor}
+ */
+
+/**
+ * Registered as `js-data-mongodb` in NPM.
+ *
+ * @example <caption>Install from NPM</caption>
+ * npm i --save js-data-mongodb@beta js-data@beta mongodb bson
+ *
+ * @example <caption>Load via CommonJS</caption>
+ * var MongoDBAdapter = require('js-data-mongodb').MongoDBAdapter
+ * var adapter = new MongoDBAdapter()
+ *
+ * @example <caption>Load via ES2015 Modules</caption>
+ * import {MongoDBAdapter} from 'js-data-mongodb'
+ * const adapter = new MongoDBAdapter()
+ *
+ * @module js-data-mongodb
+ */
 
 export default MongoDBAdapter
