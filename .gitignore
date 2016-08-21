@@ -34,3 +34,4 @@ node_modules
 
 data/
 doc/
+.nyc_output/

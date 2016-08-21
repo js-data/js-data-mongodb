@@ -958,5 +958,3 @@ export const version = '<%= version %>'
  *
  * @module js-data-mongodb
  */
-
-export default MongoDBAdapter
