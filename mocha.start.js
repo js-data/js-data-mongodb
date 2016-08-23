@@ -16,7 +16,8 @@ JSDataAdapterTests.init({
   JSData: JSData,
   Adapter: JSDataMongoDB.MongoDBAdapter,
   adapterConfig: {
-    uri: 'mongodb://localhost:27017'
+    uri: 'mongodb://localhost:27017',
+    translateObjectIDs: true
   },
   containerConfig: {
     mapperDefaults: {

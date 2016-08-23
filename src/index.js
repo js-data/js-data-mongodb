@@ -16,6 +16,12 @@ const DEFAULTS = {
    * @default true
    */
   translateId: true,
+  /**
+   * Convert fields of record from databse that are ObjectIDs to strings
+   * @type {Boolean}
+   * @default false
+   */
+  translateObjectIDs: false,
 
   /**
    * MongoDB URI.
@@ -209,24 +215,50 @@ Object.defineProperty(MongoDBAdapter, '__super__', {
 MongoDBAdapter.extend = utils.extend
 
 utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
+
+  _translateObjectIDs (r, opts) {
+    opts || (opts = {})
+    if (this.getOpt('translateObjectIDs', opts)) {
+      this._translateFieldObjectIDs(r)
+    } else if (this.getOpt('translateId', opts)) {
+      this._translateId(r)
+    }
+    return r
+  },
+
   /**
    * Translate ObjectIDs to strings.
    *
    * @method MongoDBAdapter#_translateId
    * @return {*}
    */
-  _translateId (r, opts) {
-    opts || (opts = {})
-    if (this.getOpt('translateId', opts)) {
-      if (utils.isArray(r)) {
-        r.forEach(function (_r) {
-          const __id = _r._id ? _r._id.toString() : _r._id
-          _r._id = typeof __id === 'string' ? __id : _r._id
-        })
-      } else if (utils.isObject(r)) {
-        const __id = r._id ? r._id.toString() : r._id
-        r._id = typeof __id === 'string' ? __id : r._id
+  _translateId (r) {
+    if (utils.isArray(r)) {
+      r.forEach(function (_r) {
+        const __id = _r._id ? _r._id.toString() : _r._id
+        _r._id = typeof __id === 'string' ? __id : _r._id
+      })
+    } else if (utils.isObject(r)) {
+      const __id = r._id ? r._id.toString() : r._id
+      r._id = typeof __id === 'string' ? __id : r._id
+    }
+    return r
+  },
+
+  _translateFieldObjectIDs (r) {
+    const _checkFields = (r) => {
+      for (let field in r) {
+        if (r[field]._bsontype === 'ObjectID') {
+          r[field] = typeof r[field].toString() === 'string' ? r[field].toString() : r[field]
+        }
       }
+    }
+    if (utils.isArray(r)) {
+      r.forEach(function (_r) {
+        _checkFields(_r)
+      })
+    } else if (utils.isObject(r)) {
+      _checkFields(r)
     }
     return r
   },
@@ -314,7 +346,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     }).then(function (cursor) {
       let record
       let r = cursor.ops ? cursor.ops : cursor
-      self._translateId(r, opts)
+      self._translateObjectIDs(r, opts)
       record = utils.isArray(r) ? r[0] : r
       cursor.connection = undefined
       return [record, cursor]
@@ -364,7 +396,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     }).then(function (cursor) {
       let records = []
       let r = cursor.ops ? cursor.ops : cursor
-      self._translateId(r, opts)
+      self._translateObjectIDs(r, opts)
       records = r
       cursor.connection = undefined
       return [records, cursor]
@@ -508,7 +540,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       })
     }).then(function (record) {
       if (record) {
-        self._translateId(record, opts)
+        self._translateObjectIDs(record, opts)
       }
       return [record, {}]
     })
@@ -555,7 +587,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
         })
       })
     }).then(function (records) {
-      self._translateId(records, opts)
+      self._translateObjectIDs(records, opts)
       return [records, {}]
     })
   },
