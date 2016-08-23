@@ -68,153 +68,132 @@ const REMOVE_OPTS_DEFAULTS = {}
  *
  * @class MongoDBAdapter
  * @extends Adapter
- * @param {Object} [opts] Configuration options.
+ * @param {object} [opts] Configuration options.
  * @param {boolean} [opts.debug=false] See {@link Adapter#debug}.
- * @param {Object} [opts.countOpts] See {@link MongoDBAdapter#countOpts}.
- * @param {Object} [opts.findOpts] See {@link MongoDBAdapter#findOpts}.
- * @param {Object} [opts.findOneOpts] See {@link MongoDBAdapter#findOneOpts}.
- * @param {Object} [opts.insertOpts] See {@link MongoDBAdapter#insertOpts}.
- * @param {Object} [opts.insertManyOpts] See {@link MongoDBAdapter#insertManyOpts}.
+ * @param {object} [opts.countOpts] See {@link MongoDBAdapter#countOpts}.
+ * @param {object} [opts.findOpts] See {@link MongoDBAdapter#findOpts}.
+ * @param {object} [opts.findOneOpts] See {@link MongoDBAdapter#findOneOpts}.
+ * @param {object} [opts.insertOpts] See {@link MongoDBAdapter#insertOpts}.
+ * @param {object} [opts.insertManyOpts] See {@link MongoDBAdapter#insertManyOpts}.
  * @param {boolean} [opts.raw=false] See {@link Adapter#raw}.
- * @param {Object} [opts.removeOpts] See {@link MongoDBAdapter#removeOpts}.
+ * @param {object} [opts.removeOpts] See {@link MongoDBAdapter#removeOpts}.
  * @param {boolean} [opts.translateId=true] See {@link MongoDBAdapter#translateId}.
- * @param {Object} [opts.updateOpts] See {@link MongoDBAdapter#updateOpts}.
+ * @param {object} [opts.updateOpts] See {@link MongoDBAdapter#updateOpts}.
  * @param {string} [opts.uri="mongodb://localhost:27017"] See {@link MongoDBAdapter#uri}.
  */
 export function MongoDBAdapter (opts) {
-  const self = this
-  utils.classCallCheck(self, MongoDBAdapter)
+  utils.classCallCheck(this, MongoDBAdapter)
   opts || (opts = {})
   if (utils.isString(opts)) {
     opts = { uri: opts }
   }
   utils.fillIn(opts, DEFAULTS)
-  Adapter.call(self, opts)
+
+  // Setup non-enumerable properties
+  Object.defineProperties(this, {
+    /**
+     * A Promise that resolves to a reference to the MongoDB client being used by
+     * this adapter.
+     *
+     * @name MongoDBAdapter#client
+     * @type {Promise}
+     */
+    client: {
+      writable: true,
+      value: undefined
+    },
+
+    _db: {
+      writable: true,
+      value: undefined
+    }
+  })
+
+  Adapter.call(this, opts)
 
   /**
    * Default options to pass to collection#count.
    *
    * @name MongoDBAdapter#countOpts
-   * @type {Object}
+   * @type {object}
    * @default {}
    */
-  self.countOpts || (self.countOpts = {})
-  utils.fillIn(self.countOpts, COUNT_OPTS_DEFAULTS)
+  this.countOpts || (this.countOpts = {})
+  utils.fillIn(this.countOpts, COUNT_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#find.
    *
    * @name MongoDBAdapter#findOpts
-   * @type {Object}
+   * @type {object}
    * @default {}
    */
-  self.findOpts || (self.findOpts = {})
-  utils.fillIn(self.findOpts, FIND_OPTS_DEFAULTS)
+  this.findOpts || (this.findOpts = {})
+  utils.fillIn(this.findOpts, FIND_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#findOne.
    *
    * @name MongoDBAdapter#findOneOpts
-   * @type {Object}
+   * @type {object}
    * @default {}
    */
-  self.findOneOpts || (self.findOneOpts = {})
-  utils.fillIn(self.findOneOpts, FIND_ONE_OPTS_DEFAULTS)
+  this.findOneOpts || (this.findOneOpts = {})
+  utils.fillIn(this.findOneOpts, FIND_ONE_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#insert.
    *
    * @name MongoDBAdapter#insertOpts
-   * @type {Object}
+   * @type {object}
    * @default {}
    */
-  self.insertOpts || (self.insertOpts = {})
-  utils.fillIn(self.insertOpts, INSERT_OPTS_DEFAULTS)
+  this.insertOpts || (this.insertOpts = {})
+  utils.fillIn(this.insertOpts, INSERT_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#insertMany.
    *
    * @name MongoDBAdapter#insertManyOpts
-   * @type {Object}
+   * @type {object}
    * @default {}
    */
-  self.insertManyOpts || (self.insertManyOpts = {})
-  utils.fillIn(self.insertManyOpts, INSERT_MANY_OPTS_DEFAULTS)
+  this.insertManyOpts || (this.insertManyOpts = {})
+  utils.fillIn(this.insertManyOpts, INSERT_MANY_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#update.
    *
    * @name MongoDBAdapter#updateOpts
-   * @type {Object}
+   * @type {object}
    * @default {}
    */
-  self.updateOpts || (self.updateOpts = {})
-  utils.fillIn(self.updateOpts, UPDATE_OPTS_DEFAULTS)
+  this.updateOpts || (this.updateOpts = {})
+  utils.fillIn(this.updateOpts, UPDATE_OPTS_DEFAULTS)
 
   /**
    * Default options to pass to collection#update.
    *
    * @name MongoDBAdapter#removeOpts
-   * @type {Object}
+   * @type {object}
    * @default {}
    */
-  self.removeOpts || (self.removeOpts = {})
-  utils.fillIn(self.removeOpts, REMOVE_OPTS_DEFAULTS)
+  this.removeOpts || (this.removeOpts = {})
+  utils.fillIn(this.removeOpts, REMOVE_OPTS_DEFAULTS)
 
-  /**
-   * A Promise that resolves to a reference to the MongoDB client being used by
-   * this adapter.
-   *
-   * @name MongoDBAdapter#client
-   * @type {Object}
-   */
-  self.client = new Promise(function (resolve, reject) {
-    MongoClient.connect(opts.uri, function (err, db) {
-      return err ? reject(err) : resolve(db)
+  this.client = new utils.Promise((resolve, reject) => {
+    MongoClient.connect(opts.uri, (err, db) => {
+      if (err) {
+        return reject(err)
+      }
+      this._db = db
+      resolve(db)
     })
   })
 }
 
-// Setup prototype inheritance from Adapter
-MongoDBAdapter.prototype = Object.create(Adapter.prototype, {
-  constructor: {
-    value: MongoDBAdapter,
-    enumerable: false,
-    writable: true,
-    configurable: true
-  }
-})
-
-Object.defineProperty(MongoDBAdapter, '__super__', {
-  configurable: true,
-  value: Adapter
-})
-
-/**
- * Alternative to ES6 class syntax for extending `MongoDBAdapter`.
- *
- * @example <caption>Using the ES2015 class syntax.</caption>
- * class MyMongoDBAdapter extends MongoDBAdapter {...}
- * const adapter = new MyMongoDBAdapter()
- *
- * @example <caption>Using {@link MongoDBAdapter.extend}.</caption>
- * var instanceProps = {...}
- * var classProps = {...}
- *
- * var MyMongoDBAdapter = MongoDBAdapter.extend(instanceProps, classProps)
- * var adapter = new MyMongoDBAdapter()
- *
- * @method MongoDBAdapter.extend
- * @static
- * @param {Object} [instanceProps] Properties that will be added to the
- * prototype of the subclass.
- * @param {Object} [classProps] Properties that will be added as static
- * properties to the subclass itself.
- * @return {Object} Subclass of `MongoDBAdapter`.
- */
-MongoDBAdapter.extend = utils.extend
-
-utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
+Adapter.extend({
+  constructor: MongoDBAdapter,
 
   _translateObjectIDs (r, opts) {
     opts || (opts = {})
@@ -234,7 +213,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   _translateId (r) {
     if (utils.isArray(r)) {
-      r.forEach(function (_r) {
+      r.forEach((_r) => {
         const __id = _r._id ? _r._id.toString() : _r._id
         _r._id = typeof __id === 'string' ? __id : _r._id
       })
@@ -254,7 +233,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
       }
     }
     if (utils.isArray(r)) {
-      r.forEach(function (_r) {
+      r.forEach((_r) => {
         _checkFields(_r)
       })
     } else if (utils.isObject(r)) {
@@ -267,10 +246,10 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Retrieve the number of records that match the selection query.
    *
    * @method MongoDBAdapter#count
-   * @param {Object} mapper The mapper.
-   * @param {Object} query Selection query.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.countOpts] Options to pass to collection#count.
+   * @param {object} mapper The mapper.
+   * @param {object} query Selection query.
+   * @param {object} [opts] Configuration options.
+   * @param {object} [opts.countOpts] Options to pass to collection#count.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
    * @param {string[]} [opts.with=[]] Relations to eager load.
@@ -283,25 +262,24 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_count
    * @private
-   * @param {Object} mapper The mapper.
-   * @param {Object} query Selection query.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} mapper The mapper.
+   * @param {object} query Selection query.
+   * @param {object} [opts] Configuration options.
    * @return {Promise}
    */
   _count (mapper, query, opts) {
-    const self = this
     opts || (opts = {})
 
-    const countOpts = self.getOpt('countOpts', opts)
-    utils.fillIn(countOpts, self.getQueryOptions(mapper, query))
-    const mongoQuery = self.getQuery(mapper, query)
+    return this._run((client, success, failure) => {
+      const collectionId = this._getCollectionId(mapper, opts)
+      const countOpts = this.getOpt('countOpts', opts)
+      utils.fillIn(countOpts, this.getQueryOptions(mapper, query))
 
-    return self.getClient().then(function (client) {
-      return new Promise(function (resolve, reject) {
-        client.collection(mapper.table || underscore(mapper.name)).count(mongoQuery, countOpts, function (err, count) {
-          return err ? reject(err) : resolve([count, {}])
-        })
-      })
+      const mongoQuery = this.getQuery(mapper, query)
+
+      client
+        .collection(collectionId)
+        .count(mongoQuery, countOpts, (err, count) => err ? failure(err) : success([count, {}]))
     })
   },
 
@@ -309,10 +287,10 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Create a new record.
    *
    * @method MongoDBAdapter#create
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The record to be created.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.insertOpts] Options to pass to collection#insert.
+   * @param {object} mapper The mapper.
+   * @param {object} props The record to be created.
+   * @param {object} [opts] Configuration options.
+   * @param {object} [opts.insertOpts] Options to pass to collection#insert.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * @return {Promise}
    */
@@ -322,31 +300,35 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_create
    * @private
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The record to be created.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} mapper The mapper.
+   * @param {object} props The record to be created.
+   * @param {object} [opts] Configuration options.
    * @return {Promise}
    */
   _create (mapper, props, opts) {
-    const self = this
     props || (props = {})
     opts || (opts = {})
-    props = utils.plainCopy(props)
 
-    const insertOpts = self.getOpt('insertOpts', opts)
+    return this._run((client, success, failure) => {
+      const collectionId = this._getCollectionId(mapper, opts)
+      const insertOpts = this.getOpt('insertOpts', opts)
 
-    return self.getClient().then(function (client) {
-      return new Promise(function (resolve, reject) {
-        const collection = client.collection(mapper.table || underscore(mapper.name))
-        const method = collection.insertOne ? 'insertOne' : 'insert'
-        collection[method](props, insertOpts, function (err, cursor) {
-          return err ? reject(err) : resolve(cursor)
-        })
-      })
-    }).then(function (cursor) {
+      const collection = client.collection(collectionId)
+      const handler = (err, cursor) => err ? failure(err) : success(cursor)
+
+      props = utils.plainCopy(props)
+
+      if (collection.insertOne) {
+        collection
+          .insertOne(props, insertOpts, handler)
+      } else {
+        collection
+          .insert(props, insertOpts, handler)
+      }
+    }).then((cursor) => {
       let record
       let r = cursor.ops ? cursor.ops : cursor
-      self._translateObjectIDs(r, opts)
+      this._translateObjectIDs(r, opts)
       record = utils.isArray(r) ? r[0] : r
       cursor.connection = undefined
       return [record, cursor]
@@ -357,10 +339,10 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Create multiple records in a single batch.
    *
    * @method MongoDBAdapter#createMany
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The records to be created.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.insertManyOpts] Options to pass to
+   * @param {object} mapper The mapper.
+   * @param {object} props The records to be created.
+   * @param {object} [opts] Configuration options.
+   * @param {object} [opts.insertManyOpts] Options to pass to
    * collection#insertMany.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
@@ -373,30 +355,26 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_createMany
    * @private
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The records to be created.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} mapper The mapper.
+   * @param {object} props The records to be created.
+   * @param {object} [opts] Configuration options.
    * @return {Promise}
    */
   _createMany (mapper, props, opts) {
-    const self = this
     props || (props = {})
     opts || (opts = {})
-    props = utils.plainCopy(props)
 
-    const insertManyOpts = self.getOpt('insertManyOpts', opts)
+    return this._run((client, success, failure) => {
+      const collectionId = this._getCollectionId(mapper, opts)
+      const insertManyOpts = this.getOpt('insertManyOpts', opts)
+      props = utils.plainCopy(props)
 
-    return self.getClient().then(function (client) {
-      return new Promise(function (resolve, reject) {
-        const collection = client.collection(mapper.table || underscore(mapper.name))
-        collection.insertMany(props, insertManyOpts, function (err, cursor) {
-          return err ? reject(err) : resolve(cursor)
-        })
-      })
-    }).then(function (cursor) {
+      client.collection(collectionId)
+        .insertMany(props, insertManyOpts, (err, cursor) => err ? failure(err) : success(cursor))
+    }).then((cursor) => {
       let records = []
       let r = cursor.ops ? cursor.ops : cursor
-      self._translateObjectIDs(r, opts)
+      this._translateObjectIDs(r, opts)
       records = r
       cursor.connection = undefined
       return [records, cursor]
@@ -407,12 +385,12 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Destroy the record with the given primary key.
    *
    * @method MongoDBAdapter#destroy
-   * @param {Object} mapper The mapper.
+   * @param {object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to destroy.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} [opts] Configuration options.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
-   * @param {Object} [opts.removeOpts] Options to pass to collection#remove.
+   * @param {object} [opts.removeOpts] Options to pass to collection#remove.
    * @return {Promise}
    */
 
@@ -422,46 +400,50 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_destroy
    * @private
-   * @param {Object} mapper The mapper.
+   * @param {object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to destroy.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} [opts] Configuration options.
    * @return {Promise}
    */
   _destroy (mapper, id, opts) {
-    const self = this
     opts || (opts = {})
-    const removeOpts = self.getOpt('removeOpts', opts)
 
-    return self.getClient().then(function (client) {
-      return new Promise(function (resolve, reject) {
-        const mongoQuery = {}
-        mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
-        const collection = client.collection(mapper.table || underscore(mapper.name))
-        collection[collection.deleteOne ? 'deleteOne' : 'remove'](mongoQuery, removeOpts, function (err, cursor) {
-          return err ? reject(err) : resolve(cursor)
-        })
-      })
-    }).then(function (cursor) {
-      return [undefined, cursor]
-    })
+    return this._run((client, success, failure) => {
+      const collectionId = this._getCollectionId(mapper, opts)
+      const removeOpts = this.getOpt('removeOpts', opts)
+
+      const mongoQuery = {
+        [mapper.idAttribute]: this.toObjectID(mapper, id)
+      }
+      const collection = client.collection(collectionId)
+      const handler = (err, cursor) => err ? failure(err) : success(cursor)
+
+      if (collection.deleteOne) {
+        collection
+          .deleteOne(mongoQuery, removeOpts, handler)
+      } else {
+        collection
+          .remove(mongoQuery, removeOpts, handler)
+      }
+    }).then((cursor) => [undefined, cursor])
   },
 
   /**
    * Destroy the records that match the selection query.
    *
    * @method MongoDBAdapter#destroyAll
-   * @param {Object} mapper the mapper.
-   * @param {Object} [query] Selection query.
-   * @param {Object} [query.where] Filtering criteria.
+   * @param {object} mapper the mapper.
+   * @param {object} [query] Selection query.
+   * @param {object} [query.where] Filtering criteria.
    * @param {string|Array} [query.orderBy] Sorting criteria.
    * @param {string|Array} [query.sort] Same as `query.sort`.
    * @param {number} [query.limit] Limit results.
    * @param {number} [query.skip] Offset results.
    * @param {number} [query.offset] Same as `query.skip`.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} [opts] Configuration options.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
-   * @param {Object} [opts.removeOpts] Options to pass to collection#remove.
+   * @param {object} [opts.removeOpts] Options to pass to collection#remove.
    * @return {Promise}
    */
 
@@ -471,27 +453,32 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_destroyAll
    * @private
-   * @param {Object} mapper the mapper.
-   * @param {Object} [query] Selection query.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} mapper the mapper.
+   * @param {object} [query] Selection query.
+   * @param {object} [opts] Configuration options.
    * @return {Promise}
    */
   _destroyAll (mapper, query, opts) {
-    const self = this
     query || (query = {})
     opts || (opts = {})
-    const removeOpts = self.getOpt('removeOpts', opts)
-    utils.fillIn(removeOpts, self.getQueryOptions(mapper, query))
 
-    return self.getClient().then(function (client) {
-      const mongoQuery = self.getQuery(mapper, query)
-      return new Promise(function (resolve, reject) {
-        const collection = client.collection(mapper.table || underscore(mapper.name))
-        collection[collection.deleteMany ? 'deleteMany' : 'remove'](mongoQuery, removeOpts, function (err, cursor) {
-          return err ? reject(err) : resolve(cursor)
-        })
-      })
-    }).then(function (cursor) {
+    return this._run((client, success, failure) => {
+      const collectionId = this._getCollectionId(mapper, opts)
+      const removeOpts = this.getOpt('removeOpts', opts)
+      utils.fillIn(removeOpts, this.getQueryOptions(mapper, query))
+
+      const mongoQuery = this.getQuery(mapper, query)
+      const collection = client.collection(collectionId)
+      const handler = (err, cursor) => err ? failure(err) : success(cursor)
+
+      if (collection.deleteMany) {
+        collection
+          .deleteMany(mongoQuery, removeOpts, handler)
+      } else {
+        collection
+          .remove(mongoQuery, removeOpts, handler)
+      }
+    }).then((cursor) => {
       cursor.connection = undefined
       return [undefined, cursor]
     })
@@ -501,10 +488,11 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Retrieve the record with the given primary key.
    *
    * @method MongoDBAdapter#find
-   * @param {Object} mapper The mapper.
+   * @param {object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to retrieve.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.findOneOpts] Options to pass to collection#findOne.
+   * @param {object} [opts] Configuration options.
+   * @param {string|string[]|object} [opts.fields] Select a subset of fields to be returned.
+   * @param {object} [opts.findOneOpts] Options to pass to collection#findOne.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
    * @param {string[]} [opts.with=[]] Relations to eager load.
@@ -517,30 +505,30 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_find
    * @private
-   * @param {Object} mapper The mapper.
+   * @param {object} mapper The mapper.
    * @param {(string|number)} id Primary key of the record to retrieve.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} [opts] Configuration options.
+   * @param {string|string[]|object} [opts.fields] Select a subset of fields to be returned.
    * @return {Promise}
    */
   _find (mapper, id, opts) {
-    const self = this
     opts || (opts = {})
     opts.with || (opts.with = [])
 
-    const findOneOpts = self.getOpt('findOneOpts', opts)
-    findOneOpts.fields || (findOneOpts.fields = {})
+    return this._run((client, success, failure) => {
+      const collectionId = this._getCollectionId(mapper, opts)
+      const findOneOpts = this.getOpt('findOneOpts', opts)
+      findOneOpts.fields = this._getFields(mapper, opts)
 
-    return self.getClient().then(function (client) {
-      return new Promise(function (resolve, reject) {
-        let mongoQuery = {}
-        mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
-        client.collection(mapper.table || underscore(mapper.name)).findOne(mongoQuery, findOneOpts, function (err, record) {
-          return err ? reject(err) : resolve(record)
-        })
-      })
-    }).then(function (record) {
+      const mongoQuery = {
+        [mapper.idAttribute]: this.toObjectID(mapper, id)
+      }
+
+      client.collection(collectionId)
+        .findOne(mongoQuery, findOneOpts, (err, record) => err ? failure(err) : success(record))
+    }).then((record) => {
       if (record) {
-        self._translateObjectIDs(record, opts)
+        this._translateObjectIDs(record, opts)
       }
       return [record, {}]
     })
@@ -550,10 +538,11 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Retrieve the records that match the selection query.
    *
    * @method MongoDBAdapter#findAll
-   * @param {Object} mapper The mapper.
-   * @param {Object} query Selection query.
-   * @param {Object} [opts] Configuration options.
-   * @param {Object} [opts.findOpts] Options to pass to collection#find.
+   * @param {object} mapper The mapper.
+   * @param {object} query Selection query.
+   * @param {object} [opts] Configuration options.
+   * @param {string|string[]|object} [opts.fields] Select a subset of fields to be returned.
+   * @param {object} [opts.findOpts] Options to pass to collection#find.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
    * @param {string[]} [opts.with=[]] Relations to eager load.
@@ -566,29 +555,62 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_findAll
    * @private
-   * @param {Object} mapper The mapper.
-   * @param {Object} query Selection query.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} mapper The mapper.
+   * @param {object} query Selection query.
+   * @param {object} [opts] Configuration options.
+   * @param {string|string[]|object} [opts.fields] Select a subset of fields to be returned.
    * @return {Promise}
    */
   _findAll (mapper, query, opts) {
-    const self = this
     opts || (opts = {})
 
-    const findOpts = self.getOpt('findOpts', opts)
-    utils.fillIn(findOpts, self.getQueryOptions(mapper, query))
-    findOpts.fields || (findOpts.fields = {})
-    const mongoQuery = self.getQuery(mapper, query)
+    return this._run((client, success, failure) => {
+      const collectionId = this._getCollectionId(mapper, opts)
+      const findOpts = this.getOpt('findOpts', opts)
+      utils.fillIn(findOpts, this.getQueryOptions(mapper, query))
+      findOpts.fields = this._getFields(mapper, opts)
 
-    return self.getClient().then(function (client) {
-      return new Promise(function (resolve, reject) {
-        client.collection(mapper.table || underscore(mapper.name)).find(mongoQuery, findOpts).toArray(function (err, records) {
-          return err ? reject(err) : resolve(records)
-        })
-      })
-    }).then(function (records) {
-      self._translateObjectIDs(records, opts)
+      const mongoQuery = this.getQuery(mapper, query)
+
+      client.collection(collectionId)
+        .find(mongoQuery, findOpts)
+        .toArray((err, records) => err ? failure(err) : success(records))
+    }).then((records) => {
+      this._translateObjectIDs(records, opts)
       return [records, {}]
+    })
+  },
+
+  _getCollectionId (mapper, opts) {
+    opts || (opts = {})
+    return opts.table || opts.collection || mapper.table || mapper.collection || underscore(mapper.name)
+  },
+
+  _getFields (mapper, opts) {
+    opts || (opts = {})
+    if (utils.isString(opts.fields)) {
+      opts.fields = { [opts.fields]: 1 }
+    } else if (utils.isArray(opts.fields)) {
+      const fields = {}
+      opts.fields.forEach((field) => {
+        fields[field] = 1
+      })
+      return fields
+    }
+    return opts.fields
+  },
+
+  _run (cb) {
+    if (this._db) {
+      // Use the cached db object
+      return new utils.Promise((resolve, reject) => {
+        cb(this._db, resolve, reject)
+      })
+    }
+    return this.getClient().then((client) => {
+      return new utils.Promise((resolve, reject) => {
+        cb(client, resolve, reject)
+      })
     })
   },
 
@@ -596,13 +618,13 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Apply the given update to the record with the specified primary key.
    *
    * @method MongoDBAdapter#update
-   * @param {Object} mapper The mapper.
+   * @param {object} mapper The mapper.
    * @param {(string|number)} id The primary key of the record to be updated.
-   * @param {Object} props The update to apply to the record.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} props The update to apply to the record.
+   * @param {object} [opts] Configuration options.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
-   * @param {Object} [opts.updateOpts] Options to pass to collection#update.
+   * @param {object} [opts.updateOpts] Options to pass to collection#update.
    * @return {Promise}
    */
 
@@ -612,51 +634,60 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *
    * @method MongoDBAdapter#_update
    * @private
-   * @param {Object} mapper The mapper.
+   * @param {object} mapper The mapper.
    * @param {(string|number)} id The primary key of the record to be updated.
-   * @param {Object} props The update to apply to the record.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} props The update to apply to the record.
+   * @param {object} [opts] Configuration options.
    * @return {Promise}
    */
   _update (mapper, id, props, opts) {
-    const self = this
     props || (props = {})
     opts || (opts = {})
-    const updateOpts = self.getOpt('updateOpts', opts)
 
-    return self.find(mapper, id, { raw: false }).then(function (record) {
-      if (!record) {
-        throw new Error('Not Found')
-      }
-      return self.getClient().then(function (client) {
-        return new Promise(function (resolve, reject) {
-          const mongoQuery = {}
-          mongoQuery[mapper.idAttribute] = self.toObjectID(mapper, id)
-          const collection = client.collection(mapper.table || underscore(mapper.name))
-          collection[collection.updateOne ? 'updateOne' : 'update'](mongoQuery, { $set: props }, updateOpts, function (err, cursor) {
-            return err ? reject(err) : resolve(cursor)
-          })
+    return this._find(mapper, id, { raw: false })
+      .then((result) => {
+        if (!result[0]) {
+          throw new Error('Not Found')
+        }
+        return this._run((client, success, failure) => {
+          const collectionId = this._getCollectionId(mapper, opts)
+          const updateOpts = this.getOpt('updateOpts', opts)
+
+          const mongoQuery = {
+            [mapper.idAttribute]: this.toObjectID(mapper, id)
+          }
+          const collection = client.collection(collectionId)
+          const handler = (err, cursor) => err ? failure(err) : success(cursor)
+
+          if (collection.updateOne) {
+            collection
+              .updateOne(mongoQuery, { $set: props }, updateOpts, handler)
+          } else {
+            collection
+              .update(mongoQuery, { $set: props }, updateOpts, handler)
+          }
         })
       })
-    }).then(function (cursor) {
-      return self.find(mapper, id, { raw: false }).then(function (record) {
-        cursor.connection = undefined
-        return [record, cursor]
+      .then((cursor) => {
+        return this._find(mapper, id, { raw: false })
+          .then((result) => {
+            cursor.connection = undefined
+            return [result[0], cursor]
+          })
       })
-    })
   },
 
   /**
    * Apply the given update to all records that match the selection query.
    *
    * @method MongoDBAdapter#updateAll
-   * @param {Object} mapper The mapper.
-   * @param {Object} props The update to apply to the selected records.
-   * @param {Object} [query] Selection query.
-   * @param {Object} [opts] Configuration options.
+   * @param {object} mapper The mapper.
+   * @param {object} props The update to apply to the selected records.
+   * @param {object} [query] Selection query.
+   * @param {object} [opts] Configuration options.
    * @param {boolean} [opts.raw=false] Whether to return a more detailed
    * response object.
-   * @param {Object} [opts.updateOpts] Options to pass to collection#update.
+   * @param {object} [opts.updateOpts] Options to pass to collection#update.
    * @return {Promise}
    */
 
@@ -673,41 +704,42 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @return {Promise}
    */
   _updateAll (mapper, props, query, opts) {
-    const self = this
     props || (props = {})
     query || (query = {})
     opts || (opts = {})
     let ids
-    const updateOpts = self.getOpt('updateOpts', opts)
-    updateOpts.multi = true
 
-    return Promise.all([
-      self.findAll(mapper, query, { raw: false }),
-      self.getClient()
-    ]).then(function (results) {
-      let [records, client] = results
-      const queryOptions = self.getQueryOptions(mapper, query)
-      const mongoQuery = self.getQuery(mapper, query)
+    return this._run((client, success, failure) => {
+      return this._findAll(mapper, query, { raw: false }).then((result) => {
+        const collectionId = this._getCollectionId(mapper, opts)
+        const updateOpts = this.getOpt('updateOpts', opts)
+        updateOpts.multi = true
 
-      queryOptions.$set = props
-      ids = records.map(function (record) {
-        return self.toObjectID(mapper, record[mapper.idAttribute])
+        const queryOptions = this.getQueryOptions(mapper, query)
+        queryOptions.$set = props
+        ids = result[0].map((record) => this.toObjectID(mapper, record[mapper.idAttribute]))
+
+        const mongoQuery = this.getQuery(mapper, query)
+        const collection = client.collection(collectionId)
+        const handler = (err, cursor) => err ? failure(err) : success(cursor)
+
+        if (collection.updateMany) {
+          collection
+            .updateMany(mongoQuery, queryOptions, updateOpts, handler)
+        } else {
+          collection
+            .update(mongoQuery, queryOptions, updateOpts, handler)
+        }
       })
-
-      return new Promise(function (resolve, reject) {
-        const collection = client.collection(mapper.table || underscore(mapper.name))
-        collection[collection.updateMany ? 'updateMany' : 'update'](mongoQuery, queryOptions, updateOpts, function (err, cursor) {
-          return err ? reject(err) : resolve(cursor)
-        })
-      })
-    }).then(function (cursor) {
-      const query = {}
-      query[mapper.idAttribute] = {
-        'in': ids
+    }).then((cursor) => {
+      const query = {
+        [mapper.idAttribute]: {
+          'in': ids
+        }
       }
-      return self.findAll(mapper, query, { raw: false }).then(function (records) {
+      return this._findAll(mapper, query, { raw: false }).then((result) => {
         cursor.connection = undefined
-        return [records, cursor]
+        return [result[0], cursor]
       })
     })
   },
@@ -719,7 +751,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * Useful when you need to do anything custom with the MongoDB client library.
    *
    * @method MongoDBAdapter#getClient
-   * @return {Object} MongoDB client.
+   * @return {object} MongoDB client.
    */
   getClient () {
     return this.client
@@ -734,7 +766,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    *   - and bunch of filtering operators
    *
    * @method MongoDBAdapter#getQuery
-   * @return {Object}
+   * @return {object}
    */
   getQuery (mapper, query) {
     query = utils.plainCopy(query || {})
@@ -858,7 +890,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * - orderBy/sort
    *
    * @method MongoDBAdapter#getQueryOptions
-   * @return {Object}
+   * @return {object}
    */
   getQueryOptions (mapper, query) {
     query = utils.plainCopy(query || {})
@@ -924,12 +956,9 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @return {*}
    */
   makeHasManyLocalKeys (mapper, def, record) {
-    const self = this
     const relatedMapper = def.getRelation()
-    const localKeys = Adapter.prototype.makeHasManyLocalKeys.call(self, mapper, def, record)
-    return localKeys.map(function (key) {
-      return self.toObjectID(relatedMapper, key)
-    })
+    const localKeys = Adapter.prototype.makeHasManyLocalKeys.call(this, mapper, def, record)
+    return localKeys.map((key) => this.toObjectID(relatedMapper, key))
   },
 
   /**
@@ -950,7 +979,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
  * console.log(version.full)
  *
  * @name module:js-data-mongodb.version
- * @type {Object}
+ * @type {object}
  * @property {string} version.full The full semver value.
  * @property {number} version.major The major version number.
  * @property {number} version.minor The minor version number.
@@ -978,7 +1007,7 @@ export const version = '<%= version %>'
  * Registered as `js-data-mongodb` in NPM.
  *
  * @example <caption>Install from NPM</caption>
- * npm i --save js-data-mongodb@beta js-data@beta mongodb bson
+ * npm i --save js-data-mongodb@rc js-data@rc mongodb bson
  *
  * @example <caption>Load via CommonJS</caption>
  * var MongoDBAdapter = require('js-data-mongodb').MongoDBAdapter
@@ -989,4 +1018,57 @@ export const version = '<%= version %>'
  * const adapter = new MongoDBAdapter()
  *
  * @module js-data-mongodb
+ */
+
+ /**
+ * Create a subclass of this MongoDBAdapter:
+ * @example <caption>MongoDBAdapter.extend</caption>
+ * // Normally you would do: import { MongoDBAdapter } from 'js-data-mongodb'
+ * const JSDataMongoDB = require('js-data-mongodb')
+ * const { MongoDBAdapter } = JSDataMongoDB
+ * console.log('Using JSDataMongoDB v' + JSDataMongoDB.version.full)
+ *
+ * // Extend the class using ES2015 class syntax.
+ * class CustomMongoDBAdapterClass extends MongoDBAdapter {
+ *   foo () { return 'bar' }
+ *   static beep () { return 'boop' }
+ * }
+ * const customMongoDBAdapter = new CustomMongoDBAdapterClass()
+ * console.log(customMongoDBAdapter.foo())
+ * console.log(CustomMongoDBAdapterClass.beep())
+ *
+ * // Extend the class using alternate method.
+ * const OtherMongoDBAdapterClass = MongoDBAdapter.extend({
+ *   foo () { return 'bar' }
+ * }, {
+ *   beep () { return 'boop' }
+ * })
+ * const otherMongoDBAdapter = new OtherMongoDBAdapterClass()
+ * console.log(otherMongoDBAdapter.foo())
+ * console.log(OtherMongoDBAdapterClass.beep())
+ *
+ * // Extend the class, providing a custom constructor.
+ * function AnotherMongoDBAdapterClass () {
+ *   MongoDBAdapter.call(this)
+ *   this.created_at = new Date().getTime()
+ * }
+ * MongoDBAdapter.extend({
+ *   constructor: AnotherMongoDBAdapterClass,
+ *   foo () { return 'bar' }
+ * }, {
+ *   beep () { return 'boop' }
+ * })
+ * const anotherMongoDBAdapter = new AnotherMongoDBAdapterClass()
+ * console.log(anotherMongoDBAdapter.created_at)
+ * console.log(anotherMongoDBAdapter.foo())
+ * console.log(AnotherMongoDBAdapterClass.beep())
+ *
+ * @method MongoDBAdapter.extend
+ * @param {object} [props={}] Properties to add to the prototype of the
+ * subclass.
+ * @param {object} [props.constructor] Provide a custom constructor function
+ * to be used as the subclass itself.
+ * @param {object} [classProps={}] Static properties to add to the subclass.
+ * @returns {Constructor} Subclass of this MongoDBAdapter class.
+ * @since 3.0.0
  */

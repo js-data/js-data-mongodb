@@ -1,3 +1,10 @@
+##### 1.0.0-rc.1 - 23 August 2016
+
+###### Backwards compatible changes
+- #16, #17 - Feature - Translate all ObjectID fields by @crobinson42
+- Cleaned up the code
+- Improved support for `fields` option in `find` and `findAll`
+
 ##### 1.0.0-beta.1 - 30 April 2016
 
 ###### Breaking changes
