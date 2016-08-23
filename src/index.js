@@ -16,6 +16,12 @@ const DEFAULTS = {
    * @default true
    */
   translateId: true,
+  /**
+   * Convert fields of record from databse that are ObjectIDs to strings
+   * @type {Boolean}
+   * @default false
+   */
+  translateObjectIDs: false,
 
   /**
    * MongoDB URI.
@@ -242,9 +248,7 @@ utils.addHiddenPropsToTarget(MongoDBAdapter.prototype, {
   _translateFieldObjectIDs (r) {
     const _checkFields = (r) => {
       for (let field in r) {
-        if (field === '_id') {
-          continue
-        } else if (r[field]._bsontype === 'ObjectID') {
+        if (r[field]._bsontype === 'ObjectID') {
           r[field] = typeof r[field].toString() === 'string' ? r[field].toString() : r[field]
         }
       }
