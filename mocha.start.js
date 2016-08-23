@@ -2,23 +2,22 @@
 'use strict'
 
 // prepare environment for js-data-adapter-tests
-require('babel-polyfill')
+import 'babel-polyfill'
 
-var JSData = require('js-data')
-var JSDataAdapterTests = require('js-data-adapter-tests')
-var JSDataMongoDB = require('./')
-var version = JSDataMongoDB.version
-var MongoDBAdapter = JSDataMongoDB.MongoDBAdapter
+import * as JSData from 'js-data'
+import JSDataAdapterTests from './node_modules/js-data-adapter/dist/js-data-adapter-tests'
+import * as JSDataMongoDB from './src/index'
 
-var assert = global.assert = JSDataAdapterTests.assert
+const assert = global.assert = JSDataAdapterTests.assert
 global.sinon = JSDataAdapterTests.sinon
 
 JSDataAdapterTests.init({
   debug: false,
   JSData: JSData,
-  Adapter: MongoDBAdapter,
+  Adapter: JSDataMongoDB.MongoDBAdapter,
   adapterConfig: {
-    uri: 'mongodb://localhost:27017'
+    uri: 'mongodb://localhost:27017',
+    translateObjectIDs: true
   },
   containerConfig: {
     mapperDefaults: {
@@ -44,6 +43,7 @@ JSDataAdapterTests.init({
 require('./test/find.test')
 
 describe('exports', function () {
-  assert(version)
-  assert(version.full)
+  it('should have exports', function () {
+    assert(JSDataMongoDB.version, 'Should have version')
+  })
 })
