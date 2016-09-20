@@ -49,7 +49,9 @@ Dear contributor,
     ```
     npm test
     ```
-    
+
+1. Commit your changes, submit a Pull Request, and wait for review!
+
 ## Project structure
 
 * `coverage/` - Code coverage report produced by `npm test`
