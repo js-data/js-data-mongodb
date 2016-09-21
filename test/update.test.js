@@ -4,15 +4,16 @@ describe('MongoDBAdapter#find', function () {
   // create a record to test update against
   before(function () {
     var id
+    adapter = this.$$adapter
 
-    this.$$adapter.findAll(this.$$User, {
+    return adapter.findAll(this.$$User, {
       name: 'John'
     }).then(function (users) {
       assert.equal(users.length, 0)
-      return this.$$adapter.create(this.$$User, {name: 'John'})
+      return adapter.create(this.$$User, {name: 'John'})
     }).then(function (user) {
       id = user._id
-      return this.$$adapter.find(this.$$User, id.toString())
+      return adapter.find(this.$$User, id.toString())
     }).then(function (user) {
       assert.objectsEqual(user, {_id: id, name: 'John'})
     })
