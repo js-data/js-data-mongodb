@@ -5,7 +5,7 @@ describe('MongoDBAdapter#find', function () {
   before(function () {
     var id
 
-    this.$$adapter.findAll(this.$$User, {
+    return this.$$adapter.findAll(this.$$User, {
       name: 'John'
     }).then(function (users) {
       assert.equal(users.length, 0)
