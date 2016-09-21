@@ -41,6 +41,7 @@ JSDataAdapterTests.init({
 })
 
 require('./test/find.test')
+require('./test/update.test')
 
 describe('exports', function () {
   it('should have exports', function () {
