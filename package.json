@@ -59,7 +59,8 @@
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "release": {
-    "verifyConditions": "condition-circle"
+    "verifyConditions": "condition-circle",
+    "branch": "realease"
   },
   "dependencies": {
     "js-data-adapter": "~0.8.2",
