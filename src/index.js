@@ -17,11 +17,22 @@ const DEFAULTS = {
    */
   translateId: true,
   /**
-   * Convert fields of record from databse that are ObjectIDs to strings
+   * Convert fields of record from database that are ObjectIDs to strings
+   *
+   * @name MongoDBAdapter#translateObjectIDs
    * @type {Boolean}
    * @default false
    */
   translateObjectIDs: false,
+
+  /**
+   * Convert the MongoDB _id to 'id'
+   *
+   * @name MongoDBAdapter#convertMongo_id
+   * @type {Boolean}
+   * @default false
+   */
+  convertMongo_id: false,
 
   /**
    * MongoDB URI.
@@ -78,12 +89,14 @@ const REMOVE_OPTS_DEFAULTS = {}
  * @param {boolean} [opts.raw=false] See {@link Adapter#raw}.
  * @param {object} [opts.removeOpts] See {@link MongoDBAdapter#removeOpts}.
  * @param {boolean} [opts.translateId=true] See {@link MongoDBAdapter#translateId}.
+ * @param {boolean} [opts.translateObjectIDs=false] See {@link MongoDBAdapter#translateObjectIDs}.
  * @param {object} [opts.updateOpts] See {@link MongoDBAdapter#updateOpts}.
  * @param {string} [opts.uri="mongodb://localhost:27017"] See {@link MongoDBAdapter#uri}.
  */
 export function MongoDBAdapter (opts) {
   utils.classCallCheck(this, MongoDBAdapter)
   opts || (opts = {})
+  /* istanbul ignore if */
   if (utils.isString(opts)) {
     opts = { uri: opts }
   }
@@ -172,7 +185,7 @@ export function MongoDBAdapter (opts) {
   utils.fillIn(this.updateOpts, UPDATE_OPTS_DEFAULTS)
 
   /**
-   * Default options to pass to collection#update.
+   * Default options to pass to collection#destroy.
    *
    * @name MongoDBAdapter#removeOpts
    * @type {object}
@@ -183,6 +196,7 @@ export function MongoDBAdapter (opts) {
 
   this.client = new utils.Promise((resolve, reject) => {
     MongoClient.connect(opts.uri, (err, db) => {
+      /* istanbul ignore if */
       if (err) {
         return reject(err)
       }
@@ -196,11 +210,12 @@ Adapter.extend({
   constructor: MongoDBAdapter,
 
   _translateObjectIDs (r, opts) {
+    if (!r) return r
     opts || (opts = {})
     if (this.getOpt('translateObjectIDs', opts)) {
       this._translateFieldObjectIDs(r)
     } else if (this.getOpt('translateId', opts)) {
-      this._translateId(r)
+      this._translateId(r, opts)
     }
     return r
   },
@@ -211,21 +226,23 @@ Adapter.extend({
    * @method MongoDBAdapter#_translateId
    * @return {*}
    */
-  _translateId (r) {
+  _translateId (r, opts) {
+    const idKey = this.getOpt('convertMongo_id', opts) ? 'id' : '_id'
     if (utils.isArray(r)) {
       r.forEach((_r) => {
-        const __id = _r._id ? _r._id.toString() : _r._id
-        _r._id = typeof __id === 'string' ? __id : _r._id
+        const __id = _r[idKey] ? _r[idKey].toString() : _r[idKey]
+        _r[idKey] = typeof __id === 'string' ? __id : _r[idKey]
       })
     } else if (utils.isObject(r)) {
-      const __id = r._id ? r._id.toString() : r._id
-      r._id = typeof __id === 'string' ? __id : r._id
+      const __id = r[idKey] ? r[idKey].toString() : r[idKey]
+      r[idKey] = typeof __id === 'string' ? __id : r[idKey]
     }
     return r
   },
 
   _translateFieldObjectIDs (r) {
     const _checkFields = (r) => {
+      if (typeof r !== 'object') return
       for (let field in r) {
         if (r[field]._bsontype === 'ObjectID') {
           r[field] = typeof r[field].toString() === 'string' ? r[field].toString() : r[field]
@@ -240,6 +257,34 @@ Adapter.extend({
       _checkFields(r)
     }
     return r
+  },
+
+  /**
+   * Convert mongodb _id to id
+   *
+   * @method MongoDBAdapter#_convertMongo_id
+   * @return {*} converts the params _id key(s) to id
+   */
+  _convertMongo_id (d, opts) {
+    if (!d) return
+    opts || (opts = {})
+    if (!this.getOpt('convertMongo_id', opts)) return d
+
+    const convert = (x) => {
+      if (x._id) {
+        x.id = x._id
+        delete x._id
+      } else if (x.id) {
+        x._id = x.id
+        delete x.id
+      }
+    }
+
+    if (Array.isArray(d)) {
+      d.forEach(convert)
+    } else if (d._id || d.id) {
+      convert(d)
+    }
   },
 
   /**
@@ -317,6 +362,7 @@ Adapter.extend({
       const handler = (err, cursor) => err ? failure(err) : success(cursor)
 
       props = utils.plainCopy(props)
+      this._convertMongo_id(props, opts)
 
       if (collection.insertOne) {
         collection
@@ -331,6 +377,7 @@ Adapter.extend({
       this._translateObjectIDs(r, opts)
       record = utils.isArray(r) ? r[0] : r
       cursor.connection = undefined
+      this._convertMongo_id(record, opts)
       return [record, cursor]
     })
   },
@@ -368,6 +415,7 @@ Adapter.extend({
       const collectionId = this._getCollectionId(mapper, opts)
       const insertManyOpts = this.getOpt('insertManyOpts', opts)
       props = utils.plainCopy(props)
+      this._convertMongo_id(props, opts)
 
       client.collection(collectionId)
         .insertMany(props, insertManyOpts, (err, cursor) => err ? failure(err) : success(cursor))
@@ -377,6 +425,7 @@ Adapter.extend({
       this._translateObjectIDs(r, opts)
       records = r
       cursor.connection = undefined
+      this._convertMongo_id(records, opts)
       return [records, cursor]
     })
   },
@@ -415,6 +464,7 @@ Adapter.extend({
       const mongoQuery = {
         [mapper.idAttribute]: this.toObjectID(mapper, id)
       }
+      this._convertMongo_id(mongoQuery, opts)
       const collection = client.collection(collectionId)
       const handler = (err, cursor) => err ? failure(err) : success(cursor)
 
@@ -468,6 +518,7 @@ Adapter.extend({
       utils.fillIn(removeOpts, this.getQueryOptions(mapper, query))
 
       const mongoQuery = this.getQuery(mapper, query)
+      this._convertMongo_id(mongoQuery, opts)
       const collection = client.collection(collectionId)
       const handler = (err, cursor) => err ? failure(err) : success(cursor)
 
@@ -523,13 +574,13 @@ Adapter.extend({
       const mongoQuery = {
         [mapper.idAttribute]: this.toObjectID(mapper, id)
       }
+      this._convertMongo_id(mongoQuery, opts)
 
       client.collection(collectionId)
         .findOne(mongoQuery, findOneOpts, (err, record) => err ? failure(err) : success(record))
     }).then((record) => {
-      if (record) {
-        this._translateObjectIDs(record, opts)
-      }
+      this._translateObjectIDs(record, opts)
+      this._convertMongo_id(record, opts)
       return [record, {}]
     })
   },
@@ -571,12 +622,14 @@ Adapter.extend({
       findOpts.fields = this._getFields(mapper, opts)
 
       const mongoQuery = this.getQuery(mapper, query)
+      this._convertMongo_id(mongoQuery, opts)
 
       client.collection(collectionId)
         .find(mongoQuery, findOpts)
         .toArray((err, records) => err ? failure(err) : success(records))
     }).then((records) => {
       this._translateObjectIDs(records, opts)
+      this._convertMongo_id(records, opts)
       return [records, {}]
     })
   },
@@ -656,6 +709,8 @@ Adapter.extend({
           const mongoQuery = {
             [mapper.idAttribute]: this.toObjectID(mapper, id)
           }
+          this._convertMongo_id(mongoQuery, opts)
+
           const collection = client.collection(collectionId)
           const handler = (err, cursor) => err ? failure(err) : success(cursor)
 
@@ -720,6 +775,7 @@ Adapter.extend({
         ids = result[0].map((record) => this.toObjectID(mapper, record[mapper.idAttribute]))
 
         const mongoQuery = this.getQuery(mapper, query)
+        this._convertMongo_id(mongoQuery, opts)
         const collection = client.collection(collectionId)
         const handler = (err, cursor) => err ? failure(err) : success(cursor)
 
@@ -931,7 +987,7 @@ Adapter.extend({
    * @return {*}
    */
   toObjectID (mapper, id) {
-    if (id !== undefined && mapper.idAttribute === '_id' && typeof id === 'string' && ObjectID.isValid(id) && !(id instanceof ObjectID)) {
+    if (id !== undefined && typeof id === 'string' && ObjectID.isValid(id) && !(id instanceof ObjectID)) {
       return new ObjectID(id)
     }
     return id
