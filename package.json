@@ -1,7 +1,7 @@
 {
   "name": "js-data-mongodb",
   "description": "MongoDB adapter for js-data.",
-  "version": "1.0.0-rc.1",
+  "version": "0.0.0-semantic-release",
   "homepage": "https://github.com/js-data/js-data-mongodb",
   "repository": {
     "type": "git",
@@ -55,7 +55,12 @@
     "mocha": "mocha -t 20000 -R dot -r babel-core/register -r babel-polyfill mocha.start.js",
     "cover": "nyc --require babel-core/register --require babel-polyfill --cache mocha -t 20000 -R dot mocha.start.js && nyc report --reporter=html",
     "test": "npm run build && npm run cover",
-    "release": "npm test && npm run doc && repo-tools updates && repo-tools changelog && repo-tools authors"
+    "release": "npm test && npm run doc && repo-tools updates && repo-tools changelog && repo-tools authors",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+  },
+  "release": {
+    "verifyConditions": "condition-circle",
+    "branch": "realease"
   },
   "dependencies": {
     "js-data-adapter": "~0.8.2",
@@ -67,6 +72,8 @@
     "mongodb": ">=1.3.x"
   },
   "devDependencies": {
-    "js-data-repo-tools": "0.5.6"
+    "condition-circle": "^1.5.0",
+    "js-data-repo-tools": "0.5.6",
+    "semantic-release": "^4.3.5"
   }
 }
