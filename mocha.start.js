@@ -17,16 +17,17 @@ JSDataAdapterTests.init({
   Adapter: JSDataMongoDB.MongoDBAdapter,
   adapterConfig: {
     uri: 'mongodb://localhost:27017',
-    translateObjectIDs: true
+    translateObjectIDs: true,
+    convertMongo_id: true
   },
   containerConfig: {
     mapperDefaults: {
-      idAttribute: '_id'
+      idAttribute: 'id'
     }
   },
   storeConfig: {
     mapperDefaults: {
-      idAttribute: '_id'
+      idAttribute: 'id'
     }
   },
   xmethods: [
@@ -42,6 +43,7 @@ JSDataAdapterTests.init({
 
 require('./test/find.test')
 require('./test/update.test')
+require('./test/adapter.test')
 
 describe('exports', function () {
   it('should have exports', function () {
