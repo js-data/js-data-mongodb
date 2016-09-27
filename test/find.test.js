@@ -102,4 +102,13 @@ describe('MongoDBAdapter#find', function () {
       throw new Error(err)
     })
   })
+
+  it('should allow use of node-mongodb-native via adapter.client', function () {
+    return adapter.client.then((db) => {
+      assert.ok(db.collection('user'))
+    })
+    .catch((err) => {
+      throw new Error(err)
+    })
+  })
 })
