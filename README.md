@@ -1,44 +1,56 @@
+
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 <img src="https://raw.githubusercontent.com/js-data/js-data/master/js-data.png" alt="js-data logo" title="js-data" align="right" width="96" height="96" />
 
 # js-data-mongodb
 
-[![Slack Status][sl_b]][sl_l]
-[![npm version][npm_b]][npm_l]
-[![Circle CI][circle_b]][circle_l]
-[![npm downloads][dn_b]][dn_l]
-[![Coverage Status][cov_b]][cov_l]
+[![Slack][1]][2]
+[![NPM][3]][4]
+[![Tests][5]][6]
+[![Downloads][7]][8]
+[![Coverage][9]][10]
 
-MongoDB adapter for [js-data](http://www.js-data.io/).
+A MongoDB adapter for the [JSData Node.js ORM][11].
 
-To get started, visit __[http://js-data.io](http://www.js-data.io/docs/js-data-mongodb)__.
+### Just getting started?
 
-## Links
+Start with the [JSData + MongoDB tutorial][12] or checkout the [API Reference Documentation][13].
 
-* [Quick start](http://www.js-data.io/docs/home#quick-start) - Get started in 5 minutes
-* [Guides and Tutorials](http://www.js-data.io/docs/home) - Learn how to use JSData
-* [`MongoDBAdapter` Guide](http://www.js-data.io/docs/js-data-mongodb) - Learn how to use `MongoDBAdapter`
-* [API Reference Docs](http://api.js-data.io) - Explore components, methods, options, etc.
-* [Community & Support](http://js-data.io/docs/community) - Find solutions and chat with the community
-* [General Contributing Guide](http://js-data.io/docs/contributing) - Give back and move the project forward
-  * [Contributing to js-data-mongodb](https://github.com/js-data/js-data-mongodb/blob/master/.github/CONTRIBUTING.md)
+### Need help?
 
-## License
+Please [post a question][14] on Stack Overflow. **This is the preferred method.**
 
-The MIT License (MIT)
+You can also chat with folks on the [Slack Channel][15]. If you end up getting
+your question answered, please still consider consider posting your question to
+Stack Overflow (then possibly answering it yourself). Thanks!
 
-Copyright (c) 2014-2016 js-data-mongodb project authors
+### Want to contribute?
 
-* [LICENSE](https://github.com/js-data/js-data-mongodb/blob/master/LICENSE)
-* [AUTHORS](https://github.com/js-data/js-data-mongodb/blob/master/AUTHORS)
-* [CONTRIBUTORS](https://github.com/js-data/js-data-mongodb/blob/master/CONTRIBUTORS)
+Awesome! You can get started over at the [Contributing guide][16].
 
-[sl_b]: http://slack.js-data.io/badge.svg
-[sl_l]: http://slack.js-data.io
-[npm_b]: https://img.shields.io/npm/v/js-data-mongodb.svg?style=flat
-[npm_l]: https://www.npmjs.org/package/js-data-mongodb
-[circle_b]: https://img.shields.io/circleci/project/js-data/js-data-mongodb.svg?style=flat
-[circle_l]: https://circleci.com/gh/js-data/js-data-mongodb
-[dn_b]: https://img.shields.io/npm/dm/js-data-mongodb.svg?style=flat
-[dn_l]: https://www.npmjs.org/package/js-data-mongodb
-[cov_b]: https://img.shields.io/codecov/c/github/js-data/js-data-mongodb.svg?style=flat
-[cov_l]: https://codecov.io/github/js-data/js-data-mongodb
+Thank you!
+
+### License
+
+[The MIT License (MIT)][17]
+
+Copyright (c) 2014-2016 [js-data-mongodb project authors][18]
+
+[1]: http://slack.js-data.io/badge.svg
+[2]: http://slack.js-data.io
+[3]: https://img.shields.io/npm/v/js-data-mongodb.svg?style=flat
+[4]: https://www.npmjs.org/package/js-data-mongodb
+[5]: https://img.shields.io/circleci/project/js-data/js-data-mongodb.svg?style=flat
+[6]: https://circleci.com/gh/js-data/js-data-mongodb
+[7]: https://img.shields.io/npm/dm/js-data-mongodb.svg?style=flat
+[8]: https://www.npmjs.org/package/js-data-mongodb
+[9]: https://img.shields.io/codecov/c/github/js-data/js-data-mongodb.svg?style=flat
+[10]: https://codecov.io/github/js-data/js-data-mongodb
+[11]: http://www.js-data.io/
+[12]: http://www.js-data.io/v3.0/docs/js-data-mongodb
+[13]: http://api.js-data.io/js-data-mongodb
+[14]: http://stackoverflow.com/questions/tagged/jsdata
+[15]: http://slack.js-data.io/
+[16]: https://github.com/js-data/js-data-mongodb/blob/master/.github/CONTRIBUTING.md
+[17]: https://github.com/js-data/js-data-mongodb/blob/master/LICENSE
+[18]: https://github.com/js-data/js-data-mongodb/blob/master/AUTHORS

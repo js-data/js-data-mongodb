@@ -17,7 +17,9 @@ const DEFAULTS = {
    */
   translateId: true,
   /**
-   * Convert fields of record from databse that are ObjectIDs to strings
+   * Convert fields of record from database that are ObjectIDs to strings
+   *
+   * @name MongoDBAdapter#translateObjectIDs
    * @type {Boolean}
    * @default false
    */
@@ -78,6 +80,7 @@ const REMOVE_OPTS_DEFAULTS = {}
  * @param {boolean} [opts.raw=false] See {@link Adapter#raw}.
  * @param {object} [opts.removeOpts] See {@link MongoDBAdapter#removeOpts}.
  * @param {boolean} [opts.translateId=true] See {@link MongoDBAdapter#translateId}.
+ * @param {boolean} [opts.translateObjectIDs=false] See {@link MongoDBAdapter#translateObjectIDs}.
  * @param {object} [opts.updateOpts] See {@link MongoDBAdapter#updateOpts}.
  * @param {string} [opts.uri="mongodb://localhost:27017"] See {@link MongoDBAdapter#uri}.
  */
@@ -172,7 +175,7 @@ export function MongoDBAdapter (opts) {
   utils.fillIn(this.updateOpts, UPDATE_OPTS_DEFAULTS)
 
   /**
-   * Default options to pass to collection#update.
+   * Default options to pass to collection#destroy.
    *
    * @name MongoDBAdapter#removeOpts
    * @type {object}

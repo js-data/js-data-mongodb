@@ -4,7 +4,7 @@ general:
       - gh-pages
 machine:
   node:
-    version: 5.7.0
+    version: 6
 dependencies:
   pre:
     - npm install -g npm
@@ -13,3 +13,4 @@ dependencies:
 test:
   post:
     - nyc report --reporter=lcov | codecov
+    - npm run semantic-release || true
