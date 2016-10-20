@@ -13,4 +13,3 @@ dependencies:
 test:
   post:
     - nyc report --reporter=lcov | codecov
-    - npm run semantic-release || true
