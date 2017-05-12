@@ -18,6 +18,7 @@ const reserved = [
 function Defaults () {}
 
 Defaults.prototype.translateId = true
+Defaults.prototype.mongoDriverOpts = { ignoreUndefined: true }
 
 const addHiddenPropsToTarget = function (target, props) {
   DSUtils.forOwn(props, function (value, key) {
@@ -84,7 +85,7 @@ export default function MongoDBAdapter (opts) {
    * @type {Object}
    */
   self.client = new DSUtils.Promise(function (resolve, reject) {
-    MongoClient.connect(opts.uri, function (err, db) {
+    MongoClient.connect(opts.uri, opts.mongoDriverOpts, function (err, db) {
       return err ? reject(err) : resolve(db)
     })
   })
