@@ -1,3 +1,8 @@
+##### 0.8.0 - 11 May 2017
+
+###### Breaking changes
+- Add mongo driver flag ignoreUndefined, defaults to `ignoreUndefined = true`
+
 ##### 0.7.0 - 19 February 2016
 
 ###### Backwards compatible API changes
