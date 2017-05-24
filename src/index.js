@@ -32,7 +32,18 @@ const DEFAULTS = {
    * @type {string}
    * @default mongodb://localhost:27017
    */
-  uri: 'mongodb://localhost:27017'
+  uri: 'mongodb://localhost:27017',
+
+  /**
+   * MongoDB Driver options
+   *
+   * @name MongoDBAdapter#mongoDriverOpts
+   * @type {object}
+   * @default { ignoreUndefined: true }
+   */
+  mongoDriverOpts: {
+    ignoreUndefined: true
+  }
 }
 
 const COUNT_OPTS_DEFAULTS = {}
@@ -185,7 +196,7 @@ export function MongoDBAdapter (opts) {
   utils.fillIn(this.removeOpts, REMOVE_OPTS_DEFAULTS)
 
   this.client = new utils.Promise((resolve, reject) => {
-    MongoClient.connect(opts.uri, (err, db) => {
+    MongoClient.connect(opts.uri, opts.mongoDriverOpts, (err, db) => {
       if (err) {
         return reject(err)
       }
