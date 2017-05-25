@@ -1,4 +1,4 @@
-/*global assert:true */
+/* global assert:true */
 'use strict'
 
 // prepare environment for js-data-adapter-tests
@@ -41,6 +41,7 @@ JSDataAdapterTests.init({
 })
 
 require('./test/find.test')
+require('./test/update.test')
 
 describe('exports', function () {
   it('should have exports', function () {
