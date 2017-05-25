@@ -1,4 +1,4 @@
-/*global assert:true */
+/* global assert:true */
 'use strict'
 
 // prepare environment for js-data-adapter-tests

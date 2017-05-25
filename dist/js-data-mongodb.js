@@ -1,13 +1,6 @@
 'use strict';
 
-var babelHelpers = {};
-babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-};
-
-babelHelpers.defineProperty = function (obj, key, value) {
+var defineProperty = function (obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
       value: value,
@@ -21,8 +14,6 @@ babelHelpers.defineProperty = function (obj, key, value) {
 
   return obj;
 };
-
-babelHelpers;
 
 var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
@@ -38,6 +29,7 @@ var reserved = ['orderBy', 'sort', 'limit', 'offset', 'skip', 'where'];
 function Defaults() {}
 
 Defaults.prototype.translateId = true;
+Defaults.prototype.mongoDriverOpts = { ignoreUndefined: true };
 
 var addHiddenPropsToTarget = function addHiddenPropsToTarget(target, props) {
   DSUtils.forOwn(props, function (value, key) {
@@ -104,7 +96,7 @@ function MongoDBAdapter(opts) {
    * @type {Object}
    */
   self.client = new DSUtils.Promise(function (resolve, reject) {
-    MongoClient.connect(opts.uri, function (err, db) {
+    MongoClient.connect(opts.uri, opts.mongoDriverOpts, function (err, db) {
       return err ? reject(err) : resolve(db);
     });
   });
@@ -121,7 +113,6 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    * @method
    * @return {Object} MongoDB client.
    */
-
   getClient: function getClient() {
     return this.client;
   },
@@ -466,16 +457,10 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
     var relationDef = Resource.getResource(def.relation);
 
     if (DSUtils.isObject(records) && !DSUtils.isArray(records)) {
-      var _ret = function () {
-        var record = records;
-        return {
-          v: self.find(relationDef, self.makeBelongsToForeignKey(Resource, def, record), __options).then(function (relatedItem) {
-            DSUtils.set(record, def.localField, relatedItem);
-          })
-        };
-      }();
-
-      if ((typeof _ret === 'undefined' ? 'undefined' : babelHelpers.typeof(_ret)) === "object") return _ret.v;
+      var record = records;
+      return self.find(relationDef, self.makeBelongsToForeignKey(Resource, def, record), __options).then(function (relatedItem) {
+        DSUtils.set(record, def.localField, relatedItem);
+      });
     } else {
       var keys = records.map(function (record) {
         return self.makeBelongsToForeignKey(Resource, def, record);
@@ -483,7 +468,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
         return key;
       });
       return self.findAll(relationDef, {
-        where: babelHelpers.defineProperty({}, relationDef.idAttribute, {
+        where: defineProperty({}, relationDef.idAttribute, {
           'in': keys
         })
       }, __options).then(function (relatedItems) {
@@ -512,7 +497,7 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
    */
   find: function find(Resource, id, options) {
     var self = this;
-    var instance = undefined;
+    var instance = void 0;
     options = self.origify(options);
     options.with || (options.with = []);
     return self.getClient().then(function (client) {
@@ -545,52 +530,50 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
           containedName = def.localField;
         }
         if (containedName) {
-          (function () {
-            var __options = DSUtils.deepMixIn({}, options.orig ? options.orig() : options);
-            __options.with = options.with.slice();
-            __options = DSUtils._(relationDef, __options);
-            DSUtils.remove(__options.with, containedName);
-            __options.with.forEach(function (relation, i) {
-              if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
-                __options.with[i] = relation.substr(containedName.length + 1);
-              } else {
-                __options.with[i] = '';
-              }
-            });
+          var __options = DSUtils.deepMixIn({}, options.orig ? options.orig() : options);
+          __options.with = options.with.slice();
+          __options = DSUtils._(relationDef, __options);
+          DSUtils.remove(__options.with, containedName);
+          __options.with.forEach(function (relation, i) {
+            if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
+              __options.with[i] = relation.substr(containedName.length + 1);
+            } else {
+              __options.with[i] = '';
+            }
+          });
 
-            var task = undefined;
+          var task = void 0;
 
-            if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
-              if (def.type === 'hasOne') {
-                task = self.loadHasOne(Resource, def, instance, __options);
-              } else {
-                task = self.loadHasMany(Resource, def, instance, __options);
-              }
-            } else if (def.type === 'hasMany' && def.localKeys) {
-              var localKeys = [];
-              var itemKeys = instance[def.localKeys] || [];
-              itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys);
-              localKeys = localKeys.concat(itemKeys || []);
-              task = self.findAll(Resource.getResource(relationName), {
-                where: babelHelpers.defineProperty({}, relationDef.idAttribute, {
-                  'in': unique(localKeys).filter(function (x) {
-                    return x;
-                  }).map(function (x) {
-                    return self.toObjectID(relationDef, x);
-                  })
+          if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
+            if (def.type === 'hasOne') {
+              task = self.loadHasOne(Resource, def, instance, __options);
+            } else {
+              task = self.loadHasMany(Resource, def, instance, __options);
+            }
+          } else if (def.type === 'hasMany' && def.localKeys) {
+            var localKeys = [];
+            var itemKeys = instance[def.localKeys] || [];
+            itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys);
+            localKeys = localKeys.concat(itemKeys || []);
+            task = self.findAll(Resource.getResource(relationName), {
+              where: defineProperty({}, relationDef.idAttribute, {
+                'in': unique(localKeys).filter(function (x) {
+                  return x;
+                }).map(function (x) {
+                  return self.toObjectID(relationDef, x);
                 })
-              }, __options).then(function (relatedItems) {
-                DSUtils.set(instance, def.localField, relatedItems);
-                return relatedItems;
-              });
-            } else if (def.type === 'belongsTo' || def.type === 'hasOne' && def.localKey) {
-              task = self.loadBelongsTo(Resource, def, instance, __options);
-            }
+              })
+            }, __options).then(function (relatedItems) {
+              DSUtils.set(instance, def.localField, relatedItems);
+              return relatedItems;
+            });
+          } else if (def.type === 'belongsTo' || def.type === 'hasOne' && def.localKey) {
+            task = self.loadBelongsTo(Resource, def, instance, __options);
+          }
 
-            if (task) {
-              tasks.push(task);
-            }
-          })();
+          if (task) {
+            tasks.push(task);
+          }
         }
       });
 
@@ -644,66 +627,62 @@ addHiddenPropsToTarget(MongoDBAdapter.prototype, {
           containedName = def.localField;
         }
         if (containedName) {
-          (function () {
-            var __options = DSUtils.deepMixIn({}, options.orig ? options.orig() : options);
-            __options.with = options.with.slice();
-            __options = DSUtils._(relationDef, __options);
-            DSUtils.remove(__options.with, containedName);
-            __options.with.forEach(function (relation, i) {
-              if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
-                __options.with[i] = relation.substr(containedName.length + 1);
-              } else {
-                __options.with[i] = '';
-              }
+          var __options = DSUtils.deepMixIn({}, options.orig ? options.orig() : options);
+          __options.with = options.with.slice();
+          __options = DSUtils._(relationDef, __options);
+          DSUtils.remove(__options.with, containedName);
+          __options.with.forEach(function (relation, i) {
+            if (relation && relation.indexOf(containedName) === 0 && relation.length >= containedName.length && relation[containedName.length] === '.') {
+              __options.with[i] = relation.substr(containedName.length + 1);
+            } else {
+              __options.with[i] = '';
+            }
+          });
+
+          var task = void 0;
+
+          if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
+            if (def.type === 'hasMany') {
+              task = self.loadHasMany(Resource, def, items, __options);
+            } else {
+              task = self.loadHasOne(Resource, def, items, __options);
+            }
+          } else if (def.type === 'hasMany' && def.localKeys) {
+            var localKeys = [];
+            items.forEach(function (item) {
+              var itemKeys = item[def.localKeys] || [];
+              itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : Object.keys(itemKeys);
+              localKeys = localKeys.concat(itemKeys || []);
             });
-
-            var task = undefined;
-
-            if (def.foreignKey && (def.type === 'hasOne' || def.type === 'hasMany')) {
-              if (def.type === 'hasMany') {
-                task = self.loadHasMany(Resource, def, items, __options);
-              } else {
-                task = self.loadHasOne(Resource, def, items, __options);
-              }
-            } else if (def.type === 'hasMany' && def.localKeys) {
-              (function () {
-                var localKeys = [];
-                items.forEach(function (item) {
-                  var itemKeys = item[def.localKeys] || [];
-                  itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : Object.keys(itemKeys);
-                  localKeys = localKeys.concat(itemKeys || []);
+            task = self.findAll(Resource.getResource(relationName), {
+              where: defineProperty({}, relationDef.idAttribute, {
+                'in': unique(localKeys).filter(function (x) {
+                  return x;
+                }).map(function (x) {
+                  return self.toObjectID(relationDef, x);
+                })
+              })
+            }, __options).then(function (relatedItems) {
+              items.forEach(function (item) {
+                var attached = [];
+                var itemKeys = item[def.localKeys] || [];
+                itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys);
+                relatedItems.forEach(function (relatedItem) {
+                  if (itemKeys && itemKeys.indexOf(relatedItem[relationDef.idAttribute]) !== -1) {
+                    attached.push(relatedItem);
+                  }
                 });
-                task = self.findAll(Resource.getResource(relationName), {
-                  where: babelHelpers.defineProperty({}, relationDef.idAttribute, {
-                    'in': unique(localKeys).filter(function (x) {
-                      return x;
-                    }).map(function (x) {
-                      return self.toObjectID(relationDef, x);
-                    })
-                  })
-                }, __options).then(function (relatedItems) {
-                  items.forEach(function (item) {
-                    var attached = [];
-                    var itemKeys = item[def.localKeys] || [];
-                    itemKeys = DSUtils.isArray(itemKeys) ? itemKeys : DSUtils.keys(itemKeys);
-                    relatedItems.forEach(function (relatedItem) {
-                      if (itemKeys && itemKeys.indexOf(relatedItem[relationDef.idAttribute]) !== -1) {
-                        attached.push(relatedItem);
-                      }
-                    });
-                    DSUtils.set(item, def.localField, attached);
-                  });
-                  return relatedItems;
-                });
-              })();
-            } else if (def.type === 'belongsTo' || def.type === 'hasOne' && def.localKey) {
-              task = self.loadBelongsTo(Resource, def, items, __options);
-            }
+                DSUtils.set(item, def.localField, attached);
+              });
+              return relatedItems;
+            });
+          } else if (def.type === 'belongsTo' || def.type === 'hasOne' && def.localKey) {
+            task = self.loadBelongsTo(Resource, def, items, __options);
+          }
 
-            if (task) {
-              tasks.push(task);
-            }
-          })();
+          if (task) {
+            tasks.push(task);
+          }
         }
       });
       return DSUtils.Promise.all(tasks);
