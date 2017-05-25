@@ -10,12 +10,6 @@ var jsData = require('js-data');
 var jsDataAdapter = require('js-data-adapter');
 var underscore = _interopDefault(require('mout/string/underscore'));
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-};
-
 var defineProperty = function (obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
@@ -41,7 +35,9 @@ var DEFAULTS = {
    */
   translateId: true,
   /**
-   * Convert fields of record from databse that are ObjectIDs to strings
+   * Convert fields of record from database that are ObjectIDs to strings
+   *
+   * @name MongoDBAdapter#translateObjectIDs
    * @type {Boolean}
    * @default false
    */
@@ -54,7 +50,18 @@ var DEFAULTS = {
    * @type {string}
    * @default mongodb://localhost:27017
    */
-  uri: 'mongodb://localhost:27017'
+  uri: 'mongodb://localhost:27017',
+
+  /**
+   * MongoDB Driver options
+   *
+   * @name MongoDBAdapter#mongoDriverOpts
+   * @type {object}
+   * @default { ignoreUndefined: true }
+   */
+  mongoDriverOpts: {
+    ignoreUndefined: true
+  }
 };
 
 var COUNT_OPTS_DEFAULTS = {};
@@ -102,6 +109,7 @@ var REMOVE_OPTS_DEFAULTS = {};
  * @param {boolean} [opts.raw=false] See {@link Adapter#raw}.
  * @param {object} [opts.removeOpts] See {@link MongoDBAdapter#removeOpts}.
  * @param {boolean} [opts.translateId=true] See {@link MongoDBAdapter#translateId}.
+ * @param {boolean} [opts.translateObjectIDs=false] See {@link MongoDBAdapter#translateObjectIDs}.
  * @param {object} [opts.updateOpts] See {@link MongoDBAdapter#updateOpts}.
  * @param {string} [opts.uri="mongodb://localhost:27017"] See {@link MongoDBAdapter#uri}.
  */
@@ -198,7 +206,7 @@ function MongoDBAdapter(opts) {
   jsData.utils.fillIn(this.updateOpts, UPDATE_OPTS_DEFAULTS);
 
   /**
-   * Default options to pass to collection#update.
+   * Default options to pass to collection#destroy.
    *
    * @name MongoDBAdapter#removeOpts
    * @type {object}
@@ -208,7 +216,7 @@ function MongoDBAdapter(opts) {
   jsData.utils.fillIn(this.removeOpts, REMOVE_OPTS_DEFAULTS);
 
   this.client = new jsData.utils.Promise(function (resolve, reject) {
-    mongodb.MongoClient.connect(opts.uri, function (err, db) {
+    mongodb.MongoClient.connect(opts.uri, opts.mongoDriverOpts, function (err, db) {
       if (err) {
         return reject(err);
       }
@@ -636,17 +644,11 @@ jsDataAdapter.Adapter.extend({
     if (jsData.utils.isString(opts.fields)) {
       opts.fields = defineProperty({}, opts.fields, 1);
     } else if (jsData.utils.isArray(opts.fields)) {
-      var _ret = function () {
-        var fields = {};
-        opts.fields.forEach(function (field) {
-          fields[field] = 1;
-        });
-        return {
-          v: fields
-        };
-      }();
-
-      if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+      var fields = {};
+      opts.fields.forEach(function (field) {
+        fields[field] = 1;
+      });
+      return fields;
     }
     return opts.fields;
   },
@@ -1052,7 +1054,7 @@ jsDataAdapter.Adapter.extend({
  * otherwise `false` if the current version is not beta.
  */
 var version = {
-  full: '1.0.0-rc.1',
+  full: '1.0.0-rc.2',
   major: 1,
   minor: 0,
   patch: 0
