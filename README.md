@@ -13,7 +13,7 @@ A MongoDB adapter for the [JSData Node.js ORM][11].
 
 ### Installation
 
-    npm install --save js-data js-data-mongodb bson mongodb
+    npm install --save js-data js-data-mongodb mongodb bson
 
 ### Usage
 
