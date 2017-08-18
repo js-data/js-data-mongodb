@@ -1,3 +1,8 @@
+##### 1.0.1 - 17 August 2017
+
+###### Bug fixes
+- Fix Rollup config
+
 ##### 1.0.0 - 17 August 2017
 
 Stable 1.0.0 release

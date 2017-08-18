@@ -6,7 +6,7 @@ export default {
     'bson',
     'js-data',
     'js-data-adapter',
-    'mout/string/underscore'
+    'lodash.snakecase'
   ],
   plugins: [
     babel({
