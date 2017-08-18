@@ -1,3 +1,8 @@
+##### 1.0.2 - 18 August 2017
+
+###### Other
+- Update JSDoc comments
+
 ##### 1.0.1 - 17 August 2017
 
 ###### Bug fixes
