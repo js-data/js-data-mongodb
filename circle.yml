@@ -1,15 +1,26 @@
+# Adjust the behavior of the virtual machine (VM)
+machine:
+  node:
+    version: 6.11.2
+
+# Use for broader build-related configuration
 general:
   branches:
     ignore:
       - gh-pages
-machine:
-  node:
-    version: 6
+
+# Install your project's language-specific dependencies
 dependencies:
   pre:
-    - npm install -g npm
-    - npm install -g codecov nyc
-    - npm install js-data@^3.0.0-rc.4 mongodb bson@^0.4.x
+    - yarn global add nyc codecov
+  override:
+    - yarn
+  cache_directories:
+    - ~/.cache/yarn
+
+# Run your tests
 test:
+  override:
+    - yarn test
   post:
-    - nyc report --reporter=lcov | codecov
+    - nyc report --reporter=lcov > coverage.lcov && codecov

@@ -1,3 +1,7 @@
+##### 1.0.0 - 17 August 2017
+
+Stable 1.0.0 release
+
 ##### 1.0.0-rc.1 - 23 August 2016
 
 ###### Backwards compatible changes
