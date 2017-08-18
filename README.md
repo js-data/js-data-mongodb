@@ -3,6 +3,8 @@
 
 # js-data-mongodb
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/js-data/js-data-mongodb.svg)](https://greenkeeper.io/)
+
 [![Slack][1]][2]
 [![NPM][3]][4]
 [![Tests][5]][6]
