@@ -8,7 +8,7 @@ var mongodb = require('mongodb');
 var bson = require('bson');
 var jsData = require('js-data');
 var jsDataAdapter = require('js-data-adapter');
-var underscore = _interopDefault(require('mout/string/underscore'));
+var snakeCase = _interopDefault(require('lodash.snakecase'));
 
 var defineProperty = function (obj, key, value) {
   if (key in obj) {
@@ -581,6 +581,8 @@ jsDataAdapter.Adapter.extend({
     }).then(function (record) {
       if (record) {
         _this7._translateObjectIDs(record, opts);
+      } else {
+        record = undefined;
       }
       return [record, {}];
     });
@@ -637,7 +639,7 @@ jsDataAdapter.Adapter.extend({
   },
   _getCollectionId: function _getCollectionId(mapper, opts) {
     opts || (opts = {});
-    return opts.table || opts.collection || mapper.table || mapper.collection || underscore(mapper.name);
+    return opts.table || opts.collection || mapper.table || mapper.collection || snakeCase(mapper.name);
   },
   _getFields: function _getFields(mapper, opts) {
     opts || (opts = {});
@@ -1054,7 +1056,7 @@ jsDataAdapter.Adapter.extend({
  * otherwise `false` if the current version is not beta.
  */
 var version = {
-  full: '1.0.0-rc.2',
+  full: '1.0.0',
   major: 1,
   minor: 0,
   patch: 0
