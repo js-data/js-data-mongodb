@@ -61,22 +61,22 @@
     "mongodb": ">=1.3.x"
   },
   "devDependencies": {
-    "babel-core": "6.24.1",
+    "babel-core": "6.26.0",
     "babel-eslint": "7.2.3",
     "babel-plugin-external-helpers": "6.22.0",
     "babel-plugin-syntax-async-functions": "6.13.0",
-    "babel-plugin-transform-regenerator": "6.24.1",
-    "babel-polyfill": "6.23.0",
+    "babel-plugin-transform-regenerator": "6.26.0",
+    "babel-polyfill": "6.26.0",
     "babel-preset-es2015": "6.24.1",
-    "chai": "3.5.0",
+    "chai": "4.1.1",
     "ink-docstrap": "git+https://github.com/js-data/docstrap.git#cfbe45fa313e1628c493076d5e15d2b855dfbf2c",
     "js-data-repo-tools": "1.0.0",
-    "jsdoc": "3.4.3",
-    "mocha": "3.4.2",
-    "nyc": "10.3.2",
-    "rollup": "0.41.6",
-    "rollup-plugin-babel": "2.7.1",
-    "sinon": "2.3.1",
-    "standard": "10.0.2"
+    "jsdoc": "3.5.4",
+    "mocha": "3.5.0",
+    "nyc": "11.1.0",
+    "rollup": "0.47.6",
+    "rollup-plugin-babel": "3.0.2",
+    "sinon": "3.2.1",
+    "standard": "10.0.3"
   }
 }
