@@ -66,7 +66,7 @@ Copyright (c) 2014-2017 [js-data-mongodb project authors][18]
 [9]: https://img.shields.io/codecov/c/github/js-data/js-data-mongodb.svg?style=flat
 [10]: https://codecov.io/github/js-data/js-data-mongodb
 [11]: http://www.js-data.io/
-[12]: http://www.js-data.io/v3.0/docs/js-data-mongodb
+[12]: http://www.js-data.io/docs/js-data-mongodb
 [13]: http://api.js-data.io/js-data-mongodb
 [14]: http://stackoverflow.com/questions/tagged/jsdata
 [15]: http://slack.js-data.io/
