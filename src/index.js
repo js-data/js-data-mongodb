@@ -5,7 +5,7 @@ import {
   Adapter,
   reserved
 } from 'js-data-adapter'
-import underscore from 'mout/string/underscore'
+import snakeCase from 'lodash.snakecase'
 
 const DEFAULTS = {
   /**
@@ -543,6 +543,8 @@ Adapter.extend({
     }).then((record) => {
       if (record) {
         this._translateObjectIDs(record, opts)
+      } else {
+        record = undefined
       }
       return [record, {}]
     })
@@ -597,7 +599,7 @@ Adapter.extend({
 
   _getCollectionId (mapper, opts) {
     opts || (opts = {})
-    return opts.table || opts.collection || mapper.table || mapper.collection || underscore(mapper.name)
+    return opts.table || opts.collection || mapper.table || mapper.collection || snakeCase(mapper.name)
   },
 
   _getFields (mapper, opts) {

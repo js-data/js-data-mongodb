@@ -13,7 +13,27 @@
 
 A MongoDB adapter for the [JSData Node.js ORM][11].
 
-### Just getting started?
+### Installation
+
+    npm install --save js-data js-data-mongodb bson mongodb
+
+### Usage
+
+```js
+import { MongoDBAdapter } from 'js-data-mongodb';
+
+// Create an instance of MongoDBAdapter
+const adapter = new MongoDBAdapter({
+  uri: 'mongodb://localhost:27017'
+});
+
+// Other JSData setup hidden
+
+// Register the adapter instance
+store.registerAdapter('mongodb', adapter, { default: true });
+```
+
+### JSData + MongoDB Tutorial
 
 Start with the [JSData + MongoDB tutorial][12] or checkout the [API Reference Documentation][13].
 
@@ -35,7 +55,7 @@ Thank you!
 
 [The MIT License (MIT)][17]
 
-Copyright (c) 2014-2016 [js-data-mongodb project authors][18]
+Copyright (c) 2014-2017 [js-data-mongodb project authors][18]
 
 [1]: http://slack.js-data.io/badge.svg
 [2]: http://slack.js-data.io
