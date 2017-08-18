@@ -1056,10 +1056,10 @@ jsDataAdapter.Adapter.extend({
  * otherwise `false` if the current version is not beta.
  */
 var version = {
-  full: '1.0.0',
+  full: '1.0.1',
   major: 1,
   minor: 0,
-  patch: 0
+  patch: 1
 };
 
 /**
