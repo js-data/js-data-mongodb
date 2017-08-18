@@ -59,8 +59,8 @@ const REMOVE_OPTS_DEFAULTS = {}
  *
  * @example
  * // Use Container instead of DataStore on the server
- * import {Container} from 'js-data'
- * import MongoDBAdapter from 'js-data-mongodb'
+ * import { Container } from 'js-data';
+ * import MongoDBAdapter from 'js-data-mongodb';
  *
  * // Create a store to hold your Mappers
  * const store = new Container({
@@ -68,16 +68,16 @@ const REMOVE_OPTS_DEFAULTS = {}
  *     // MongoDB uses "_id" as the primary key
  *     idAttribute: '_id'
  *   }
- * })
+ * });
  *
  * // Create an instance of MongoDBAdapter with default settings
- * const adapter = new MongoDBAdapter()
+ * const adapter = new MongoDBAdapter();
  *
  * // Mappers in "store" will use the MongoDB adapter by default
- * store.registerAdapter('mongodb', adapter, { default: true })
+ * store.registerAdapter('mongodb', adapter, { default: true });
  *
  * // Create a Mapper that maps to a "user" collection
- * store.defineMapper('user')
+ * store.defineMapper('user');
  *
  * @class MongoDBAdapter
  * @extends Adapter
@@ -991,8 +991,8 @@ Adapter.extend({
  * Details of the current version of the `js-data-mongodb` module.
  *
  * @example
- * import {version} from 'js-data-mongodb'
- * console.log(version.full)
+ * import { version } from 'js-data-mongodb';
+ * console.log(version.full);
  *
  * @name module:js-data-mongodb.version
  * @type {object}
@@ -1011,8 +1011,8 @@ export const version = '<%= version %>'
  * {@link MongoDBAdapter} class.
  *
  * @example
- * import {MongoDBAdapter} from 'js-data-mongodb'
- * const adapter = new MongoDBAdapter()
+ * import { MongoDBAdapter } from 'js-data-mongodb';
+ * const adapter = new MongoDBAdapter();
  *
  * @name module:js-data-mongodb.MongoDBAdapter
  * @see MongoDBAdapter
@@ -1023,61 +1023,61 @@ export const version = '<%= version %>'
  * Registered as `js-data-mongodb` in NPM.
  *
  * @example <caption>Install from NPM</caption>
- * npm i --save js-data-mongodb@rc js-data@rc mongodb bson
+ * npm i --save js-data-mongodb js-data mongodb bson
  *
  * @example <caption>Load via CommonJS</caption>
- * var MongoDBAdapter = require('js-data-mongodb').MongoDBAdapter
- * var adapter = new MongoDBAdapter()
+ * const MongoDBAdapter = require('js-data-mongodb').MongoDBAdapter;
+ * const adapter = new MongoDBAdapter();
  *
  * @example <caption>Load via ES2015 Modules</caption>
- * import {MongoDBAdapter} from 'js-data-mongodb'
- * const adapter = new MongoDBAdapter()
+ * import { MongoDBAdapter } from 'js-data-mongodb';
+ * const adapter = new MongoDBAdapter();
  *
  * @module js-data-mongodb
  */
 
- /**
+/**
  * Create a subclass of this MongoDBAdapter:
  * @example <caption>MongoDBAdapter.extend</caption>
- * // Normally you would do: import { MongoDBAdapter } from 'js-data-mongodb'
- * const JSDataMongoDB = require('js-data-mongodb')
- * const { MongoDBAdapter } = JSDataMongoDB
- * console.log('Using JSDataMongoDB v' + JSDataMongoDB.version.full)
+ * // Normally you would do: import { MongoDBAdapter } from 'js-data-mongodb';
+ * const JSDataMongoDB = require('js-data-mongodb');
+ * const { MongoDBAdapter } = JSDataMongoDB;
+ * console.log('Using JSDataMongoDB v' + JSDataMongoDB.version.full);
  *
  * // Extend the class using ES2015 class syntax.
  * class CustomMongoDBAdapterClass extends MongoDBAdapter {
- *   foo () { return 'bar' }
- *   static beep () { return 'boop' }
+ *   foo () { return 'bar'; }
+ *   static beep () { return 'boop'; }
  * }
- * const customMongoDBAdapter = new CustomMongoDBAdapterClass()
- * console.log(customMongoDBAdapter.foo())
- * console.log(CustomMongoDBAdapterClass.beep())
+ * const customMongoDBAdapter = new CustomMongoDBAdapterClass();
+ * console.log(customMongoDBAdapter.foo());
+ * console.log(CustomMongoDBAdapterClass.beep());
  *
  * // Extend the class using alternate method.
  * const OtherMongoDBAdapterClass = MongoDBAdapter.extend({
- *   foo () { return 'bar' }
+ *   foo () { return 'bar'; }
  * }, {
- *   beep () { return 'boop' }
- * })
- * const otherMongoDBAdapter = new OtherMongoDBAdapterClass()
- * console.log(otherMongoDBAdapter.foo())
- * console.log(OtherMongoDBAdapterClass.beep())
+ *   beep () { return 'boop'; }
+ * });
+ * const otherMongoDBAdapter = new OtherMongoDBAdapterClass();
+ * console.log(otherMongoDBAdapter.foo());
+ * console.log(OtherMongoDBAdapterClass.beep());
  *
  * // Extend the class, providing a custom constructor.
  * function AnotherMongoDBAdapterClass () {
- *   MongoDBAdapter.call(this)
- *   this.created_at = new Date().getTime()
+ *   MongoDBAdapter.call(this);
+ *   this.created_at = new Date().getTime();
  * }
  * MongoDBAdapter.extend({
  *   constructor: AnotherMongoDBAdapterClass,
- *   foo () { return 'bar' }
+ *   foo () { return 'bar'; }
  * }, {
- *   beep () { return 'boop' }
- * })
- * const anotherMongoDBAdapter = new AnotherMongoDBAdapterClass()
- * console.log(anotherMongoDBAdapter.created_at)
- * console.log(anotherMongoDBAdapter.foo())
- * console.log(AnotherMongoDBAdapterClass.beep())
+ *   beep () { return 'boop'; }
+ * });
+ * const anotherMongoDBAdapter = new AnotherMongoDBAdapterClass();
+ * console.log(anotherMongoDBAdapter.created_at);
+ * console.log(anotherMongoDBAdapter.foo());
+ * console.log(AnotherMongoDBAdapterClass.beep());
  *
  * @method MongoDBAdapter.extend
  * @param {object} [props={}] Properties to add to the prototype of the
