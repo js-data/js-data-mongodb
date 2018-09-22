@@ -42,12 +42,12 @@ const DEFAULTS = {
    * @default { ignoreUndefined: true }
    */
   mongoDriverOpts: {
-    ignoreUndefined: true
+    ignoreUndefined: true,
+    useNewUrlParser: true // https://thanhphu.net/2018/05/23/about-mongos-usenewurlparser-warning/
   }
 }
 
 const COUNT_OPTS_DEFAULTS = {}
-const FIND_OPTS_DEFAULTS = {}
 const FIND_ONE_OPTS_DEFAULTS = {}
 const INSERT_OPTS_DEFAULTS = {}
 const INSERT_MANY_OPTS_DEFAULTS = {}
@@ -136,16 +136,6 @@ export function MongoDBAdapter (opts) {
   utils.fillIn(this.countOpts, COUNT_OPTS_DEFAULTS)
 
   /**
-   * Default options to pass to collection#find.
-   *
-   * @name MongoDBAdapter#findOpts
-   * @type {object}
-   * @default {}
-   */
-  this.findOpts || (this.findOpts = {})
-  utils.fillIn(this.findOpts, FIND_OPTS_DEFAULTS)
-
-  /**
    * Default options to pass to collection#findOne.
    *
    * @name MongoDBAdapter#findOneOpts
@@ -196,12 +186,12 @@ export function MongoDBAdapter (opts) {
   utils.fillIn(this.removeOpts, REMOVE_OPTS_DEFAULTS)
 
   this.client = new utils.Promise((resolve, reject) => {
-    MongoClient.connect(opts.uri, opts.mongoDriverOpts, (err, db) => {
+    MongoClient.connect(opts.uri, opts.mongoDriverOpts, (err, client) => {
       if (err) {
         return reject(err)
       }
-      this._db = db
-      resolve(db)
+      this._db = client.db()
+      resolve(this._db)
     })
   })
 }
@@ -293,7 +283,7 @@ Adapter.extend({
 
       client
         .collection(collectionId)
-        .count(mongoQuery, countOpts, (err, count) => err ? failure(err) : success([count, {}]))
+        .countDocuments(mongoQuery, countOpts, (err, count) => err ? failure(err) : success([count, {}]))
     })
   },
 
@@ -531,15 +521,13 @@ Adapter.extend({
 
     return this._run((client, success, failure) => {
       const collectionId = this._getCollectionId(mapper, opts)
-      const findOneOpts = this.getOpt('findOneOpts', opts)
-      findOneOpts.fields = this._getFields(mapper, opts)
 
       const mongoQuery = {
         [mapper.idAttribute]: this.toObjectID(mapper, id)
       }
 
       client.collection(collectionId)
-        .findOne(mongoQuery, findOneOpts, (err, record) => err ? failure(err) : success(record))
+        .findOne(mongoQuery, (err, record) => err ? failure(err) : success(record))
     }).then((record) => {
       if (record) {
         this._translateObjectIDs(record, opts)
@@ -582,14 +570,11 @@ Adapter.extend({
 
     return this._run((client, success, failure) => {
       const collectionId = this._getCollectionId(mapper, opts)
-      const findOpts = this.getOpt('findOpts', opts)
-      utils.fillIn(findOpts, this.getQueryOptions(mapper, query))
-      findOpts.fields = this._getFields(mapper, opts)
 
       const mongoQuery = this.getQuery(mapper, query)
 
       client.collection(collectionId)
-        .find(mongoQuery, findOpts)
+        .find(mongoQuery)
         .toArray((err, records) => err ? failure(err) : success(records))
     }).then((records) => {
       this._translateObjectIDs(records, opts)

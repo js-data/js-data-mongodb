@@ -1,3 +1,12 @@
+##### 2.0.0 - 21 September 2018
+
+- updated dependencies to use latest mongodb client lib 
+
+###### BREAKING CHANGES:
+
+- Dependency `mongodb` version 3+ compatible only
+- Dependency `bson` version 1+ compatible only
+
 ##### 1.0.2 - 18 August 2017
 
 ###### Other
