@@ -5,13 +5,13 @@ jobs:
       - image: circleci/node:10
       - image: mongo:3.4.4-jessie
     steps:
-      - checkout
-      - run: npm install
-      - run: sudo npm i -g nyc codecov
-      - run:
+    - checkout
+    - run: npm install
+    - run: sudo npm i -g nyc codecov
+    - run:
         name: Test
         command: npm test
-      - run:
+    - run:
         name: Generate code coverage
         command: nyc report --reporter=lcov > coverage.lcov && codecov
 
