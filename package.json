@@ -53,10 +53,8 @@
   },
   "dependencies": {
     "bson": "^3.0.2",
-    "js-data": "^3.0.3",
     "js-data-adapter": "1.0.0",
-    "lodash.snakecase": "4.1.1",
-    "mongodb": "^3.1.6"
+    "lodash.snakecase": "4.1.1"
   },
   "peerDependencies": {
     "bson": ">=3",
@@ -76,6 +74,8 @@
     "js-data-repo-tools": "1.0.0",
     "jsdoc": "^3.5.5",
     "mocha": "3.5.0",
+    "mongodb": "^3.1.6",
+    "js-data": "^3.0.3",
     "nyc": "11.1.0",
     "rollup": "0.47.6",
     "rollup-plugin-babel": "3.0.2",
