@@ -1,26 +1,24 @@
-# Adjust the behavior of the virtual machine (VM)
-machine:
-  node:
-    version: 6.11.2
+version: 2
+jobs:
+  test:
+    docker:
+    - image: circleci/node:10
+    steps:
+    - checkout
+    - run: npm install
+    - run: sudo npm i -g nyc codecov
+    - run:
+        name: Test
+        command: npm test
+    - run:
+        name: Generate code coverage
+        command: nyc report --reporter=lcov > coverage.lcov && codecov
 
-# Use for broader build-related configuration
-general:
-  branches:
-    ignore:
+workflows:
+  version: 2
+  build_and_test:
+    branches:
+      ignore:
       - gh-pages
-
-# Install your project's language-specific dependencies
-dependencies:
-  pre:
-    - yarn global add nyc codecov
-  override:
-    - yarn
-  cache_directories:
-    - ~/.cache/yarn
-
-# Run your tests
-test:
-  override:
-    - yarn test
-  post:
-    - nyc report --reporter=lcov > coverage.lcov && codecov
+    jobs:
+    - test
