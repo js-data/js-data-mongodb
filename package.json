@@ -74,7 +74,7 @@
     "chai": "4.1.1",
     "ink-docstrap": "git+https://github.com/js-data/docstrap.git#cfbe45fa313e1628c493076d5e15d2b855dfbf2c",
     "js-data-repo-tools": "1.0.0",
-    "jsdoc": "3.5.4",
+    "jsdoc": "^3.5.5",
     "mocha": "3.5.0",
     "nyc": "11.1.0",
     "rollup": "0.47.6",
